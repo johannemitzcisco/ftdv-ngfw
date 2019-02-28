@@ -1,0 +1,101 @@
+module ftdv-ngfw {
+
+  namespace "http://example.com/ftdv-ngfw";
+  prefix ftdv-ngfw;
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+  import tailf-common {
+    prefix tailf;
+  }
+  import tailf-ncs {
+    prefix ncs;
+  }
+
+  description
+    "Bla bla...";
+
+  revision 2016-01-01 {
+    description
+      "Initial revision.";
+  }
+
+  list ftdv-ngfw {
+    description "This is an RFS skeleton service";
+
+    key deployment-name;
+    leaf deployment-name {
+      tailf:info "Unique deployment/service id";
+      tailf:cli-allow-range;
+      type string;
+    }
+
+    uses ncs:service-data;
+    ncs:servicepoint ftdv-ngfw-servicepoint;
+//    ncs:servicepoint esc-ftd-deployment-servicepoint;
+
+    leaf ip-address {
+      type inet:ipv4-address;
+    }
+
+    tailf:action get-device-data {
+      tailf:actionpoint ftdv-ngfw-getDeviceData-action;
+      input {
+      }
+      output {
+        leaf result {
+          type string;
+        }
+      }
+    }
+
+    container state {
+      config "false";
+      list zone {
+        key name;
+        leaf name {
+          type string;
+        }
+        leaf id {
+          type string;
+        }
+      }
+      list port {
+        key name;
+        leaf name {
+          type string;
+        }
+        leaf id {
+          type string;
+        }
+      }
+    }
+
+    list access-rule {
+      key name;
+      leaf name {
+        type string;
+      }
+      leaf source-zone {
+        type string;
+        tailf:non-strict-leafref {
+          path "../../state/zone/name";
+        }
+      }
+      leaf source-port {
+        type string;
+        tailf:non-strict-leafref {
+          path "../../state/port/name";
+        }
+      }
+      leaf action {
+        type enumeration {
+          enum "PERMIT";
+          enum "TRUST";
+          enum "DENY";
+        }
+      }
+    }
+  }
+}

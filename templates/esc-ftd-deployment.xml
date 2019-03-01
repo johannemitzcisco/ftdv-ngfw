@@ -12,22 +12,22 @@
           <deployment>
             <name>{deployment-name}</name>
             <locators>
-              <datacenter>CTO-RTP</datacenter>
+              <datacenter>BOFA</datacenter>
             </locators>
             <vm_group>
-              <name>FTD</name>
+              <name>FTD-{deployment-name}</name>
               <image>Templates/FTDv-6_3</image>
               <bootup_time>900</bootup_time>
               <volumes>
                 <volume>
-                  <name>NFS-2</name>
+                  <name>rivers142-local</name>
                   <volid>1</volid>
                 </volume>
               </volumes>
               <interfaces>
                 <interface>
                   <nicid>1</nicid>
-                  <network>VLAN-2</network>
+                  <network>VM Network</network>
                   <ip_address>{ip-address}</ip_address>
                 </interface>
               </interfaces>
@@ -62,13 +62,13 @@
                 <max_active>1</max_active>
                 <elastic>true</elastic>
                 <static_ip_address_pool>
-                  <network>VLAN-2</network>
+                  <network>VM Network</network>
                   <ip_address>{ip-address}</ip_address>
                 </static_ip_address_pool>
               </scaling>
               <placement>
                 <type>zone_host</type>
-                <zone>Cluster-1</zone>
+                <zone>BOFA</zone>
               </placement>
               <recovery_policy>
                 <action_on_recovery>REBOOT_THEN_REDEPLOY</action_on_recovery>
@@ -84,7 +84,7 @@
                 </configuration>
                 <configuration>
                   <dst>ovfProperty:dns1</dst>
-                  <data>10.2.1.254</data>
+                  <data>172.26.48.16</data>
                 </configuration>
                 <configuration>
                   <dst>ovfProperty:ipv4.addr</dst>
@@ -96,7 +96,7 @@
                 </configuration>
                 <configuration>
                   <dst>ovfProperty:ipv4.gw</dst>
-                  <data>10.2.1.254</data>
+                  <data>172.26.14.1</data>
                 </configuration>
               </config_data>
             </vm_group>

@@ -20,9 +20,6 @@ class ServiceCallbacks(Service):
 
         vars = ncs.template.Variables()
         template = ncs.template.Template(service)
-        address = service.ip_address.split(".")
-        vars.add('TEMPLATE-ID', address[len(address)-1])
-        self.log.info('template-id: ', address[len(address)-1])
         template.apply('esc-ftd-deployment', vars)
 
         try:

@@ -94,12 +94,12 @@ def getAccessToken(log, service):
     # defining a params dict for the parameters to be sent to the API 
 #            PARAMS = {'address':location} 
     # sending get request and saving the response as response object 
-    payload = {'grant_type': 'password','username': 'admin','password': 'Cisco123'}
+    payload = {'grant_type': 'password','username': 'admin','password': 'cisco123'}
     headers = {'Content-Type' : 'application/json', 'Accept' : 'application/json'}
     r = requests.post(url=URL, headers=headers, verify=False, json=payload )
 #            r = requests.get(url = URL, params = PARAMS, json=payload) 
     # extracting data in json format 
-#            self.log.info(r.content)
+    log.info(r.content)
     data = r.json()
     # log.info(data)
     access_token = data['access_token']

@@ -1,0 +1,19 @@
+<config xmlns="http://tail-f.com/ns/config/1.0">
+  <vnf-manager xmlns="http://example.com/ftdv-ngfw">
+  <site>
+    <name>CTO-LAB</name>
+    <tenant>admin</tenant>
+    <datacenter-name>CTO-RTP</datacenter-name>
+    <cluster-name>Cluster-1</cluster-name>
+    <datastore-name>NFS-2</datastore-name>
+    <dns-ip-address>10.2.1.3</dns-ip-address>
+    <management-network>
+      <name>VLAN-2</name>
+      <netmask>255.255.255.0</netmask>
+      <gateway-ip-address>10.2.1.254</gateway-ip-address>
+      <ip-address-resource-pool>dummy</ip-address-resource-pool>
+    </management-network>
+    <elastic-services-controller>ESC</elastic-services-controller>
+  </site>
+  </vnf-manager>
+</config>

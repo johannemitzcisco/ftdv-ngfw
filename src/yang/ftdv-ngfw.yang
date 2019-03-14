@@ -3,26 +3,194 @@ module ftdv-ngfw {
   namespace "http://example.com/ftdv-ngfw";
   prefix ftdv-ngfw;
 
-  import ietf-inet-types {
-    prefix inet;
-  }
-  import tailf-common {
-    prefix tailf;
-  }
-  import tailf-ncs {
-    prefix ncs;
-  }
+  import ietf-inet-types { prefix inet; }
+  import tailf-common { prefix tailf; }
+  import tailf-ncs { prefix ncs; }
+  import tailf-etsi-rel2-nfvo { prefix nfvo-rel2; }
 
   description
-    "Bla bla...";
+    "VNF deployment service for VMWare using Cisco NFVO package";
 
-  revision 2016-01-01 {
+  revision 2019-03-12 {
     description
       "Initial revision.";
   }
 
+  container vnf-manager {
+    list site {
+      tailf:info "VNF Deployment Site";
+      key name;
+      leaf name {
+        tailf:info "Name of the Site";
+        type string;
+      }
+      leaf-list tenant {
+        tailf:info "Tenant of the site";
+        type string;
+      }
+      leaf datacenter-name {
+        tailf:info "VMWare datacenter name";
+        type string;
+        mandatory "true";
+      }
+      leaf cluster-name {
+        tailf:info "VMWare compute cluster name";
+        type string;
+        mandatory "true";
+      }
+      leaf datastore-name {
+        tailf:info "VMWare datastore name";
+        type string;
+        mandatory "true";
+      }
+      leaf dns-ip-address {
+        tailf:info "DNS server IP address";
+        type inet:ipv4-address;
+        mandatory "true";
+      }
+      container management-network {
+        tailf:info "Site's management network configuration";
+        leaf name {
+          tailf:info "VMware network name";
+          type string;
+          mandatory "true";
+        }
+        leaf netmask {
+          tailf:info "Netmask (ie. 255.255.255.0)";
+          type inet:ipv4-address;
+          mandatory "true";
+        }
+        leaf gateway-ip-address {
+          tailf:info "Gateway IP address";
+          type inet:ipv4-address;
+          mandatory "true";
+        }
+        leaf ip-address-resource-pool {
+          tailf:info "Resource Pool for IP addresses";
+          type string;
+          mandatory "true";
+        }
+      }
+      leaf elastic-services-controller {
+        tailf:info "ESC devices that manages this site";
+        type leafref {
+          path "/ncs:devices/ncs:device/ncs:name";
+        }
+  //      must "deref(.)/../module[name='esc']" {
+  //      must "deref(.)/../module/name ='esc'" {
+  //        tailf:dependency "/ncs:devices/ncs:device/ncs:name";
+  //      }
+        mandatory "true";
+      }
+      list vnf-deployment {
+        description "Service to stand up scalable FTDv using NFVO Service Pack";
+        tailf:info "Service to stand up scalable FTDv using NFVO Service Pack";
+        key deployment-name;
+        leaf deployment-name {
+          tailf:info "Unique deployment/service id";
+          tailf:cli-allow-range;
+          type string;
+        }
+
+        uses ncs:service-data;
+        ncs:servicepoint ftdv-ngfw-scalable-servicepoint;
+
+        leaf tenant {
+          tailf:info "Tenant of thsi site and owner of the VNF";
+          type leafref {
+            path "../../tenant";
+          }
+        }
+
+        leaf catalog-vnf {
+          tailf:info "VNF from the catalog to deploy";
+          type leafref {
+            path "../../../ftdv-ngfw:vnf-catalog/ftdv-ngfw:name";
+          }
+        }
+
+        container scaling {
+          tailf:info "Scaling attributes for the VNF";
+          leaf minimum {
+            tailf:info "Minumum number of VNFs to deploy";
+            type uint8;
+            must "current() > 0";
+          }
+          leaf maximum {
+            tailf:info "Minumum number of VNFs to deploy";
+            type uint8;
+            must "current() >= ../minimum";
+          }
+        }
+      }
+    }
+
+    list vnf-catalog {
+      key name;
+      leaf name {
+        tailf:info "Name of the VNF";
+        type string;
+      }
+      leaf descriptor-name {
+        tailf:info "Name of the VNFD from nfvo/vnfd";
+        type leafref {
+          path "/nfvo-rel2:nfvo/nfvo-rel2:vnfd/nfvo-rel2:id";
+        }
+        mandatory "true";
+      }
+      leaf descriptor-flavor {
+        tailf:info "Name of the VNFD flavor";
+        type leafref {
+          path "deref(../ftdv-ngfw:descriptor-name)/../nfvo-rel2:deployment-flavor/nfvo-rel2:id";
+        }
+        when "../descriptor-name";
+        mandatory "true";
+      }
+      leaf descriptor-instantiation-level {
+        tailf:info "Name of the VNFD instantiation level";
+        type leafref {
+          path "deref(../ftdv-ngfw:descriptor-flavor)/../nfvo-rel2:instantiation-level/nfvo-rel2:id";
+        }
+        when "../descriptor-flavor";
+        mandatory "true";
+      }
+      leaf descriptor-vdu {
+        tailf:info "Name of the VNFD virtualisation deployment unit";
+        type leafref {
+          path "deref(../ftdv-ngfw:descriptor-instantiation-level)/../nfvo-rel2:vdu-level/nfvo-rel2:vdu";
+        }
+        when "../descriptor-instantiation-level";
+        mandatory "true";
+      }
+      leaf bootup-time {
+        tailf:info "Maximum time to wait for VNF to be available";
+        type uint32;
+        mandatory "true";
+      }
+      leaf recovery-time {
+        tailf:info "Maximum time to wait for VNF to restart";
+        type uint32;
+        mandatory "true";
+      }
+      leaf authgroup {
+        tailf:info "NSO authgroup to use to connect to the VNF";
+        type leafref {
+          path "/ncs:devices/ncs:authgroups/ncs:group/ncs:name";
+        }
+        mandatory "true";
+      }
+      leaf esc-device-template {
+        tailf:info "ESC template";
+        type leafref {
+          path "/ncs:devices/ncs:template/ncs:name";
+        }
+      }
+    }
+  }
+
+
   list ftdv-ngfw {
-    description "This is an RFS skeleton service";
+    description "Service to stand up a single FTDv using ESC directly";
 
     key deployment-name;
     leaf deployment-name {

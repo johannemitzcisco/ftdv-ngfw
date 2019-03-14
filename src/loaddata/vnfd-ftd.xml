@@ -1,0 +1,67 @@
+<config xmlns="http://tail-f.com/ns/config/1.0">
+  <nfvo xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo">
+  <vnfd>
+    <id>Cisco-FTD</id>
+    <product-name>Virtual NGFW</product-name>
+    <version>6.2.3-83</version>
+    <product-info-description>Virtual Next Generation Firewall</product-info-description>
+    <vdu>
+      <id>VMWARE</id>
+      <internal-connection-point-descriptor>
+        <id>Management</id>
+        <external-connection-point-descriptor>Management</external-connection-point-descriptor>
+        <layer-protocol>Ethernet</layer-protocol>
+        <interface-id xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">1</interface-id>
+      </internal-connection-point-descriptor>
+      <virtual-compute-descriptor>vcd</virtual-compute-descriptor>
+      <virtual-storage-descriptor>root</virtual-storage-descriptor>
+      <software-image-descriptor>
+        <name>FTDv-6_3</name>
+        <container-format>ovf</container-format>
+        <disk-format>vmdk</disk-format>
+        <image>Templates/FTDv-6_3</image>
+      </software-image-descriptor>
+      <device-type xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">
+        <netconf>
+          <ned-id xmlns:ned="http://tail-f.com/ns/ncs-ned">ned:netconf</ned-id>
+        </netconf>
+      </device-type>
+    </vdu>
+    <virtual-compute-descriptor>
+      <id>vcd</id>
+      <virtual-memory>
+        <virtual-memory-size>8.0</virtual-memory-size>
+      </virtual-memory>
+      <virtual-cpu>
+        <number-of-virtual-cpus>4</number-of-virtual-cpus>
+      </virtual-cpu>
+    </virtual-compute-descriptor>
+    <virtual-storage-descriptor>
+      <id>root</id>
+      <type-of-storage>root</type-of-storage>
+      <size-of-storage>50</size-of-storage>
+    </virtual-storage-descriptor>
+    <external-connection-point-descriptor>
+      <id>Management</id>
+      <layer-protocol>Ethernet</layer-protocol>
+      <management xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc"/>
+    </external-connection-point-descriptor>
+    <deployment-flavor>
+      <id>VMWARE</id>
+      <vdu-profile>
+        <vdu>VMWARE</vdu>
+        <min-number-of-instances>1</min-number-of-instances>
+        <max-number-of-instances>1</max-number-of-instances>
+      </vdu-profile>
+      <instantiation-level>
+        <id>Cisco-FTD</id>
+        <vdu-level>
+          <vdu>VMWARE</vdu>
+          <number-of-instances>1</number-of-instances>
+        </vdu-level>
+      </instantiation-level>
+      <default-instantiation-level>Cisco-FTD</default-instantiation-level>
+    </deployment-flavor>
+  </vnfd>
+  </nfvo>
+</config>

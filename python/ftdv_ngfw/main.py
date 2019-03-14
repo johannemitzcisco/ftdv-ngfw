@@ -7,13 +7,23 @@ import requests
 import traceback
               
 
-# ------------------------
-# SERVICE CALLBACK EXAMPLE
-# ------------------------
-class ServiceCallbacks(Service):
+class ScalableService(Service):
 
-    # The create() callback is invoked inside NCS FASTMAP and
-    # must always exist.
+    @Service.create
+    def cb_create(self, tctx, root, service, proplist):
+        self.log.info('Service create(service=', service._path, ')')
+        self.log.info('Site Name: ', service._parent._parent.name)
+        self.log.info('Deployment Name: ', service.deployment_name)
+
+        vars = ncs.template.Variables()
+        vars.add("SITE-NAME", service._parent._parent.name);
+        vars.add("VNF-DEPLOYMENT-NAME", service.deployment_name);
+        vars.add("IMAGE-NAME", root.nfvo.vnfd[root.vnf_manager.vnf_catalog[service.deployment_name].descriptor_name].vdu[root.vnf_manager.vnf_catalog[service.deployment_name].descriptor_vdu].software_image_descriptor.image);
+        template = ncs.template.Template(service._parent._parent._parent._parent)
+        template.apply('vnf-deployment', vars)
+
+class BasicService(Service):
+
     @Service.create
     def cb_create(self, tctx, root, service, proplist):
         self.log.info('Service create(service=', service._path, ')')
@@ -160,8 +170,9 @@ class Main(ncs.application.Application):
         # Service callbacks require a registration for a 'service point',
         # as specified in the corresponding data model.
         #
-        self.register_service('ftdv-ngfw-servicepoint', ServiceCallbacks)
+        self.register_service('ftdv-ngfw-servicepoint', BasicService)
         self.register_action('ftdv-ngfw-getDeviceData-action', GetDeviceData)
+        self.register_service('ftdv-ngfw-scalable-servicepoint', ScalableService)
 
         # If we registered any callback(s) above, the Application class
         # took care of creating a daemon (related to the service/action point).

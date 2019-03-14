@@ -1,0 +1,102 @@
+<config-template xmlns="http://tail-f.com/ns/config/1.0">
+
+<?save-context MANAGER?>
+<?set-context-node {site[name=$SITE-NAME]}?>
+<?save-context SITE?>
+<?set-context-node {vnf-deployment[deployment-name=$VNF-DEPLOYMENT-NAME]}?>
+<?save-context VNF?>
+<?switch-context MANAGER?>
+<?set-context-node {vnf-catalog[name=/site[name=$SITE-NAME]/vnf-deployment[deployment-name=$VNF-DEPLOYMENT-NAME]/catalog-vnf]}?>
+<?save-context CATALOG?>
+
+<?switch-context VNF?>
+  <nfvo xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo">
+  <vnf-info>
+    <esc xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">
+      <vnf-deployment>
+        <tenant>{tenant}</tenant>
+        <deployment-name>{deployment-name}</deployment-name>
+        <esc>{../elastic-services-controller}</esc>
+        <username>admin</username>
+        <vnf-info>
+          <name>{deployment-name}</name>
+<?switch-context CATALOG?>
+          <vnfd>{descriptor-name}</vnfd>
+          <vnfd-flavor>{descriptor-flavor}</vnfd-flavor>
+          <instantiation-level>{descriptor-instantiation-level}</instantiation-level>
+          <vdu>
+            <id>{descriptor-vdu}</id>
+            <bootup-time>{bootup-time}</bootup-time>
+            <recovery-wait-time>{recovery-time}</recovery-wait-time>
+            <image-name>{$IMAGE-NAME}</image-name>
+<?switch-context CATALOG?>
+            <flavor-name>{descriptor-flavor}</flavor-name>
+<?switch-context SITE?>
+            <volume>
+              <id>1</id>
+              <name>{datastore-name}</name>
+            </volume>
+<?switch-context CATALOG?>
+            <authgroup>{authgroup}</authgroup>
+            <host-key-verification-type>none</host-key-verification-type>
+            <internal-connection-point>
+              <id>Management</id>
+              <connection-point-address>
+                <start>10.2.1.86</start>
+                <end>10.2.1.87</end>
+              </connection-point-address>
+            </internal-connection-point>
+            <esc-device-template>
+              <name>{esc-device-template}</name>
+              <template-id>{esc-device-template</template-id>
+<!-- ?switch-context VNF?>
+              <variable>
+                <name>VM_GROUP_NAME</name>
+                <value>{deployment-name}</value>
+              </variable -->
+<?switch-context SITE?>
+              <variable>
+                <name>CLUSTER_NAME</name>
+                <value>{cluster-name}</value>
+              </variable>
+              <variable>
+                <name>DATACENTER_NAME</name>
+                <value>{datacenter-name}</value>
+              </variable>
+              <variable>
+                <name>DNS_SERVER_IP</name>
+                <value>{dns-ip-address}</value>
+              </variable>
+              <variable>
+                <name>GATEWAY_IP_ADDRESS</name>
+                <value>{management-network/gateway-ip-address}</value>
+              </variable>
+              <!-- variable>
+                <name>MGMT_IP_ADDRESS</name>
+                <value>10.2.1.86</value>
+              </variable -->
+              <variable>
+                <name>MGMT_IP_NETMASK</name>
+                <value>{management-network/netmask}</value>
+              </variable>
+              <variable>
+                <name>MGMT_NETWORK_NAME</name>
+                <value>{management-network/name}</value>
+              </variable>
+              <variable>
+                <name>VNF_PASSWORD</name>
+                <value>cisco123</value>
+              </variable>
+            </esc-device-template>
+          </vdu>
+<?switch-context SITE?>
+          <vnfd-connection-point>
+            <id>Management</id>
+            <network-name>{management-network/name}</network-name>
+          </vnfd-connection-point>
+        </vnf-info>
+      </vnf-deployment>
+    </esc>
+  </vnf-info>
+  </nfvo>
+</config-template>

@@ -18,7 +18,9 @@ class ScalableService(Service):
         vars = ncs.template.Variables()
         vars.add("SITE-NAME", service._parent._parent.name);
         vars.add("VNF-DEPLOYMENT-NAME", service.deployment_name);
-        vars.add("IMAGE-NAME", root.nfvo.vnfd[root.vnf_manager.vnf_catalog[service.deployment_name].descriptor_name].vdu[root.vnf_manager.vnf_catalog[service.deployment_name].descriptor_vdu].software_image_descriptor.image);
+        vars.add("IMAGE-NAME", root.nfvo.vnfd[root.vnf_manager.vnf_catalog[service.catalog_vnf].descriptor_name]
+                                .vdu[root.vnf_manager.vnf_catalog[service.catalog_vnf].descriptor_vdu]
+                                .software_image_descriptor.image);
         template = ncs.template.Template(service._parent._parent._parent._parent)
         template.apply('vnf-deployment', vars)
 

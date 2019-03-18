@@ -27,16 +27,14 @@ if ip_addr == None:
     sys.exit(int(3))
 URL = "https://"+ip_addr+"/api/fdm/v2/fdm/token"
 # sending get request and saving the response as response object 
-payload = {'grant_type': 'password','username': 'admin','password': 'cisco123'}
+payload = {'grant_type': 'password','username': 'apitester','password': 'apitester'}
 headers = {'Content-Type' : 'application/json', 'Accept' : 'application/json'}
 try:
     r = requests.post(url=URL, headers=headers, verify=False, json=payload )
     # extracting data in json format
     print "FTDv ({}) API Check Response: {}".format(ip_addr, r.status_code)
-    if r.status_code == requests.codes.ok:
-        # print r.content
-        data = r.json()
-        print "FTDv ({}) API Check Response Token: {}".format(ip_addr, data['access_token'])
+    # We are only checking that the API service responds, expect "unauthorized(400)"
+    if r.status_code == 400:
         sys.exit(int(0))
     else:
         sys.exit(int(1))

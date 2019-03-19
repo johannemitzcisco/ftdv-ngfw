@@ -1,0 +1,16 @@
+<config xmlns="http://tail-f.com/ns/config/1.0">
+  <vnf-manager xmlns="http://example.com/ftdv-ngfw">
+  <site>
+    <name>{site}</name>
+      <vnf-deployment>
+        <deployment-name>{deployment-name}</deployment-name>
+        <tenant>{tenant}</tenant>
+        <catalog-vnf>{catalog-vnf}</catalog-vnf>
+        <scaling>
+          <scale-up-threshold>{scale-up-threshold}</scale-up-threshold>
+          <scale-down-threshold>{scale-down-threshold}</scale-down-threshold>
+        </scaling>
+      </vnf-deployment>
+  </site>
+  </vnf-manager>
+</config>

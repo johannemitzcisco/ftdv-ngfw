@@ -51,7 +51,7 @@
       <vdu-profile>
         <vdu>VMWARE</vdu>
         <min-number-of-instances>1</min-number-of-instances>
-        <max-number-of-instances>1</max-number-of-instances>
+        <max-number-of-instances>2</max-number-of-instances>
       </vdu-profile>
       <instantiation-level>
         <id>Cisco-FTD</id>

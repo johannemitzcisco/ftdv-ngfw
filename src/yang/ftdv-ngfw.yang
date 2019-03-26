@@ -15,6 +15,53 @@ module ftdv-ngfw {
     description
       "Initial revision.";
   }
+  identity vnfs-configured {
+    base ncs:plan-state;
+  }
+
+  identity vnfs-deployed {
+    base ncs:plan-state;
+  }
+  identity vnfs-api-available {
+    base ncs:plan-state;
+  }
+  identity monitoring-disabled {
+    base ncs:plan-state;
+  }
+  identity vnfs-registered-with-nso {
+    base ncs:plan-state;
+  }
+  identity vnfs-initialized {
+    base ncs:plan-state;
+  }
+  identity scaling-monitoring-enabled {
+    base ncs:plan-state;
+  }
+  identity vnfs-users-created {
+    base ncs:plan-state;
+  }
+  identity vnfs-synchronized-with-nso {
+    base ncs:plan-state;
+  }
+  identity itd-configured {
+    base ncs:plan-state;
+  }
+
+  identity vnf {
+    base ncs:plan-component-type;
+  }
+  identity registered-with-nso {
+    base ncs:plan-state;
+  }
+  identity initialized {
+    base ncs:plan-state;
+  }
+  identity users-created {
+    base ncs:plan-state;
+  }
+  identity syncronized-with-nso {
+    base ncs:plan-state;
+  }
 
   grouping access-rule-grouping {
     list access-rule {
@@ -65,6 +112,15 @@ module ftdv-ngfw {
           type string;
         }
       }
+      list user {
+        key name;
+        leaf name {
+          type string;
+        }
+        leaf id {
+          type string;
+        }
+      }
     }
   }
 
@@ -72,6 +128,41 @@ module ftdv-ngfw {
     tailf:action get-device-data {
       tailf:actionpoint ftdv-ngfw-getDeviceData-action;
       input {
+      }
+      output {
+        leaf result {
+          type string;
+        }
+      }
+    }
+    tailf:action add-user {
+      tailf:actionpoint ftdv-ngfw-addUser-action;
+      input {
+        leaf username {
+          mandatory "true";
+          type string;
+        }
+        leaf password {
+          mandatory "true";
+          type string;
+        }
+      }
+      output {
+        leaf result {
+          type string;
+        }
+      }
+    }
+    tailf:action delete-user {
+      tailf:actionpoint ftdv-ngfw-deleteUser-action;
+      input {
+        leaf username {
+          tailf:info "Name of user to delete (if no user available run get-device-data action)";
+          mandatory "true";
+          type leafref {
+            path "../../state/user/name";
+          }
+        }
       }
       output {
         leaf result {
@@ -103,6 +194,7 @@ module ftdv-ngfw {
     }
 
     container scaling {
+/*
       tailf:info "Scaling attributes for the VNF";
       leaf minimum {
         tailf:info "Minumum number of VNFs to deploy";
@@ -114,6 +206,7 @@ module ftdv-ngfw {
         type uint8;
         must "current() >= ../minimum";
       }
+*/
       leaf scale-up-threshold {
         tailf:info "Threshold to signal addition VNFs are needed";
         type uint8;
@@ -124,6 +217,16 @@ module ftdv-ngfw {
         type uint8;
         must "current() > 0";
       }
+      leaf ip-pool-start-address {
+        tailf:info "IP address pool start address";
+        type inet:ipv4-address;
+        mandatory "true";
+      }
+      leaf ip-pool-end-address {
+        tailf:info "IP address pool start address";
+        type inet:ipv4-address;
+        mandatory "true";
+      }
     }
 
     leaf status {
@@ -132,8 +235,10 @@ module ftdv-ngfw {
       type enumeration {
         enum "Unknown";
         enum "Deploying";
-        enum "Deployed";
+        enum "Starting VNFs";
+        enum "Provisioning";
         enum "Configurable";
+        enum "Failure";
       }
       default "Unknown";
     }
@@ -224,6 +329,8 @@ module ftdv-ngfw {
         description "Service to stand up scalable FTDv using NFVO Service Pack";
         tailf:info "Service to stand up scalable FTDv using NFVO Service Pack";
 
+        uses ncs:plan-data;
+        uses ncs:service-progress-monitoring-data;
         uses ncs:service-data;
         ncs:servicepoint ftdv-ngfw-scalable-servicepoint;
 
@@ -305,13 +412,13 @@ module ftdv-ngfw {
           path "/ftdv-ngfw:vnf-manager/ftdv-ngfw:site/ftdv-ngfw:name";
         }
       }
-      uses vnf-deployment-grouping;
-
+      uses ncs:plan-data;
+      uses ncs:service-progress-monitoring-data;
       uses ncs:service-data;
       ncs:servicepoint ftdv-ngfw-advanced-servicepoint;
 
+      uses vnf-deployment-grouping;
       uses access-rule-grouping;
-//      uses state-grouping;
     }
 
     list ftdv-ngfw-basic {
@@ -335,7 +442,11 @@ module ftdv-ngfw {
       uses state-grouping;
       uses access-rule-grouping;
     }
+
+
   }
+
+
 
 
 }

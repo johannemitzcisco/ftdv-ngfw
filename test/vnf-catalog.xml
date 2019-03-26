@@ -6,9 +6,9 @@
     <descriptor-flavor>VMWARE</descriptor-flavor>
     <descriptor-instantiation-level>Cisco-FTD</descriptor-instantiation-level>
     <descriptor-vdu>VMWARE</descriptor-vdu>
-    <bootup-time>900</bootup-time>
-    <recovery-time>900</recovery-time>
-    <authgroup>default</authgroup>
+    <bootup-time>1200</bootup-time>
+    <recovery-time>1200</recovery-time>
+    <authgroup>ftd</authgroup>
     <esc-device-template>esc-vmware</esc-device-template>
   </vnf-catalog>
 </vnf-manager>

@@ -49,8 +49,8 @@
             </internal-connection-point>
 <?switch-context CATALOG?>
             <esc-device-template>
-              <name>{esc-device-template}</name>
-              <template-id>{esc-device-template}</template-id>
+              <name>{esc-device-template}-monitoring</name>
+              <template-id>{esc-device-template}-monitoring</template-id>
 <!-- ?switch-context VNF?>
               <variable>
                 <name>VM_GROUP_NAME</name>

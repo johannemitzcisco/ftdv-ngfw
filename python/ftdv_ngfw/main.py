@@ -134,12 +134,17 @@ class ScalableService(Service):
                     service_device.management_ip_address = ip_address
                 # Reset all persistant device service data so that we are sure to register all
                 #  provisioned and and not yet provisioned devices every re-deploy run
-                # First remove devices that are no longer in NFVO as the have been removed
+                # Remove devices that are no longer in NFVO as the have been removed
                 for dev_name in [ k[8:] for k in proplistdict.keys() if k.startswith('DEVICE: ') and k[8:] not in [ d.device_name for d in vm_devices]]:
                     del proplistdict[str('DEVICE: '+dev_name)]
                     if service.device.exists(dev_name):
                         service.device.delete(dev_name)
-                # Second add any new devices NFVO has added
+                # When a device is removed, it first goes back through the deployed phase
+                # Reset out status for those devices so that we do not try to sync-from them
+                for dev in vm_devices:
+                    if dev.status.cstatus == 'deployed':
+                        proplistdict[str('DEVICE: '+dev.device_name)] = 'Not Provisioned'
+                # Add any new devices NFVO has added
                 for dev_name in [ d.device_name for d in vm_devices if d.device_name not in [ k[8:] for k in proplistdict.keys() if k.startswith('DEVICE: ')]]:
                     proplistdict[str('DEVICE: '+dev_name)] = 'Not Provisioned'
             self.log.info('==== Service Reactive-Redeploy Properties ====')
@@ -170,31 +175,27 @@ class ScalableService(Service):
                 raise Exception('VNF Error Condition from NFVO reported: ', nfvo_deployment_status_message)
 
             # Do initial provisitioning of each device
-            if nfvo_deployment_status == 'ready':
-                failure = False
-                proplistdict['ProvisionedVMCount'] = "0"
-                for device in service.device:
-                    # Call the device provisioning API directly
-                    try:
-                        if proplistdict[str('DEVICE: '+device.name)] == 'Not Provisioned' and nfvo_deployment_status == 'ready':
-                            self.log.info('Provisioning Device: '+device.name)
-                            self.provisionFTD(device.management_ip_address, 'admin', vnf_admin_deploy_password, nso_admin_password)
-                            #  set java-vm service-transaction-timeout 300
-                            commitDeviceChanges(self.log, device.management_ip_address, provision_commit_timeout)
-                        elif proplistdict[str('DEVICE: '+device.name)] in ('Provisioned', 'Registered', 'Synchronized'):
-                            planinfo_devices[device.name]['initialized'] = 'COMPLETED'
-                            proplistdict[str('DEVICE: '+device.name)] = 'Provisioned'
-                    except Exception as e:
-                        self.log.error(e)
-                        failure = True
-                        self.addPlanFailure(planinfo, device.name, 'initialized')
-                        self.addPlanFailure(planinfo, 'service', 'vnfs-initialized')
-                    else:
-                        planinfo_devices[device.name]['initialized'] = 'COMPLETED'
+            failure = False
+            proplistdict['ProvisionedVMCount'] = "0"
+            for device in service.device:
+                # Call the device provisioning API directly
+                try:
+                    if proplistdict[str('DEVICE: '+device.name)] == 'Not Provisioned' and nfvo_deployment_status == 'ready':
+                        self.log.info('Provisioning Device: '+device.name)
+                        self.provisionFTD(device.management_ip_address, 'admin', vnf_admin_deploy_password, nso_admin_password)
+                        #  set java-vm service-transaction-timeout 300
+                        commitDeviceChanges(self.log, device.management_ip_address, provision_commit_timeout)
                         proplistdict[str('DEVICE: '+device.name)] = 'Provisioned'
-                        proplistdict['ProvisionedVMCount'] = str(int(proplistdict['ProvisionedVMCount']) + 1)
-                if not failure and new_vm_count == int(proplistdict['ProvisionedVMCount']):
-                    planinfo['vnfs-initialized'] = 'COMPLETED'
+                except Exception as e:
+                    self.log.error(e)
+                    failure = True
+                    self.addPlanFailure(planinfo, device.name, 'initialized')
+                    self.addPlanFailure(planinfo, 'service', 'vnfs-initialized')
+                if proplistdict[str('DEVICE: '+device.name)] in ('Provisioned', 'Registered', 'Synchronized'):
+                    planinfo_devices[device.name]['initialized'] = 'COMPLETED'
+                    proplistdict['ProvisionedVMCount'] = str(int(proplistdict['ProvisionedVMCount']) + 1)
+            if not failure and new_vm_count == int(proplistdict['ProvisionedVMCount']):
+                planinfo['vnfs-initialized'] = 'COMPLETED'
 
             # Register devices with NSO
             failure = False
@@ -298,9 +299,9 @@ class ScalableService(Service):
         finally:
             # Apply kicker to monitor for scaling and recovery events
             self.applyKicker(root, self.log, vnf_deployment_name, site.name, service.tenant, service.deployment_name, site.elastic_services_controller)
-            self.log.info(str(proplistdict))
+            self.log.debug(str(proplistdict))
             proplist = [(k,v) for k,v in proplistdict.iteritems()]
-            self.log.info(str(proplist))
+            self.log.debug(str(proplist))
             self.write_plan_data(service, planinfo)
             self.log.info('Service status will be set to: ', service.status)
             return proplist
@@ -464,7 +465,7 @@ def commitDeviceChanges(log, ip_address, timeout=default_timeout):
     data = response.json()
     commit_id = data['id']
     URL = '/operational/deploy/{}'.format(commit_id)
-    wait_time = 15
+    wait_time = 5
     wait_increment = 5
     progressive_multiplier = 1
     elapsed_time = 0
@@ -664,7 +665,7 @@ class NGFWAdvancedService(Service):
                                 service.site, service.tenant, service.deployment_name)
             kick_node = "/firewall/ftdv-ngfw-advanced[site='{}'][tenant='{}'][deployment-name='{}']".format(
                                 service.site, service.tenant, service.deployment_name)
-            kick_expr = ". = 'Configurable' or . = 'Failed'"
+            kick_expr = ". = 'Configurable' or . = 'Failed' or . = 'Starting VNFs'"
 
             self.log.info('Creating Kicker Monitor on: ', kick_monitor_node)
             self.log.info(' kicking node: ', kick_node)
@@ -692,7 +693,7 @@ class NGFWAdvancedService(Service):
             self_plan.set_reached('ftdv-ngfw:vnfs-deployed')
         if planinfo.get('vnfs-configured', '') == 'COMPLETED':
             self_plan.set_reached('ftdv-ngfw:vnfs-configured')
-            if planinfo.get('failure', None) is not None:
+            if planinfo.get('failure', None) is None:
                 self_plan.set_reached('ncs:ready')
 
         if planinfo.get('failure', None) is not None:
@@ -769,9 +770,26 @@ class NGFWBasicService(Service):
     # def cb_pre_modification(self, tctx, op, kp, root, proplist):
     #     self.log.info('Service premod(service=', kp, ')')
 
-    @Service.post_modification
-    def cb_post_modification(self, tctx, op, kp, root, proplist):
-        self.log.info('Service postmod(service=', kp, ' ', op, ')')
+    # @Service.post_modification
+    # def cb_post_modification(self, tctx, op, kp, root, proplist):
+    #     self.log.info('Service postmod(service=', kp, ' ', op, ')')
+    #     try:
+    #         with ncs.maapi.single_write_trans(uinfo.username, uinfo.context) as trans:
+    #             service = ncs.maagic.get_node(trans, kp)
+    #             device_name = service.device_name
+    #             device = ncs.maagic.get_root().devices.device[device_name]
+    #             inputs = service.check_bgp
+    #             inputs.service_name = service.name
+    #             result = service.check_bgp()
+    #             addDeviceUser(self.log, x`, input.username, input.password)
+    #             result = "User Added"
+    #             service.status = "GOOD"
+    #             trans.apply()
+    #     except Exception as error:
+    #         self.log.info(traceback.format_exc())
+    #         result = 'Error Adding User: ' + str(error)
+    #     finally:
+    #         output.result = result
 
 
 # ---------------------------------------------

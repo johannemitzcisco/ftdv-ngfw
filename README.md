@@ -10,8 +10,7 @@ This package is a example of using Cisco's Network Service Orchestrator (NSO), a
 In this example we are using the number of users configured in the FTD as the scaling metric.  To use something different alter the
 ftdload.py script.
 
-# INSTALL / USAGE INSTRUCTIONS
-
+# INSTALL INSTRUCTIONS
 ### Requirements (minimum versions)
 NSO version: 4.7.2
 NSO NFVO package version: 3.7.0
@@ -33,13 +32,22 @@ sudo cp ftdload.py /opt/cisco/esc/esc-scripts/ftdload.py
 sudo chmod a+x /opt/cisco/esc/esc-scripts/ftdapicheck.py
 sudo chmod a+x /opt/cisco/esc/esc-scripts/ftdload.py
 ```
-These have to be executed from ESC (API is only available locally)
+Confirm that the scripts will execute
+```
+/opt/cisco/esc/esc-scripts/ftdapicheck.py
+```
+If you see the following returned (: No such file or directory) then extra carriage returns have been introduced and those need to be removed by executing:
+```
+sudo sed -i -e 's/\r$//' /opt/cisco/esc/esc-scripts/ftdapicheck.py
+sudo sed -i -e 's/\r$//' /opt/cisco/esc/esc-scripts/ftdload.py
+```
+Next execute the following on ESC (API is only available locally)
 ```
 curl -X DELETE -u admin:Cisco123 http://127.0.0.1:8080/ESCManager/internal/dynamic_mapping/metrics/FTD_API_PING ## It is ok if this errors as it doesn't exist yets
 curl -X DELETE -u admin:Cisco123 http://127.0.0.1:8080/ESCManager/internal/dynamic_mapping/metrics/FTD_LOAD ## It is ok if this errors as it doesn't exist yets
 curl -X POST -H "Content-Type: Application/xml" -d @metrics.xml -u admin:Cisco123 http://127.0.0.1:8080/ESCManager/internal/dynamic_mapping/metrics
 ```
-Check to see that metric is loaded
+Confirm that metric is loaded
 ```
 curl -u admin:Cisco123 http://127.0.0.1:8080/ESCManager/internal/dynamic_mapping/metrics | python -c 'import sys;import xml.dom.minidom;s=sys.stdin.read();print(xml.dom.minidom.parseString(s).toprettyxml())'
 ```
@@ -65,8 +73,11 @@ make clean all
 ```
 
 ### 6. Start and stop NSO to pick up ncs.conf changes and the new packages
+```
 [root@nso]# ncs --stop
-[root@nso]# ncs
+[root@nso]# ncs --with-package-reload
+```
+There are xml files in the $NSO_PROJECT_DIR/packages/ftdv-ngfw/load-dir that need to be loaded.  The first time a new package is introduced to NSO these files and the data they contain will be loaded.  If you are updating the version of the package in an existing installation, 'load merge' all the \*.xml files in this directory into the system
 
 ### 7. In NSO, Register ESC device with name "ESC"
 
@@ -86,7 +97,7 @@ make clean all
 </config>
 ```
 
-### 10. Confirm that there is a VNFD registered with NFVO (if not, load merge the all files in src/loaddata)
+### 10. Confirm that there is a VNFD registered with NFVO (if not, load merge the all files in $NSO_PROJECT_DIR/packages/ftdv-ngfw/load-dir)
 Note that this is the location to bound the scaling count.  In this example the minimum is 1 and the maximum
 is 2.  Adjust as needed
 ```
@@ -97,7 +108,7 @@ vnfd Cisco-FTD;
 `admin@ncs% load merge $NSO_PROJECT_DIR/packages/ftdv-ngfw/test/vnf-catalog.xml`
 
 # USAGE INSTRUCTIONS
-### 12. Site information needs to be poplated in the model see $NSO_PROJECT_DIR/packages/ftdv-ngfw/test/site.xml for sample load file
+### Site information needs to be poplated in the model see $NSO_PROJECT_DIR/packages/ftdv-ngfw/test/site.xml for sample load file
 `Note that the 'admin' tenant must exist in the site data`
 
 There are 2 ways to make VNFs spin up and down.
@@ -193,6 +204,12 @@ admin@ncs> show nfvo
 admin@ncs> request vnf-manager site CTO-LAB vnf-deployment admin ADVFTD device admin-ADVFTD-ADVFTD-VMWARE-ESC-1 delete-user username test
 ```
 
+# TROUBLESHOOTING
+  **Problem**
+  You see the following error when executing `show vnf-manager`:
+  `plan error-info message "Transaction error"`
+  **Solution**
+  Either the java-vm/service-transaction-timeout is not set or is too low (see the file $NSO_PROJECT_DIR/packages/ftdv-ngfw/load-dir/service-timeout.xml)
 
 
 

@@ -10,25 +10,25 @@
         <name>admin</name>
           <deployments>
           <deployment>
-            <name>{deployment-name}</name>
+            <name>{$DEPLOYMENT-NAME}</name>
             <locators>
-              <datacenter>BOFA</datacenter>
+              <datacenter>{$DATACENTER-NAME}</datacenter>
             </locators>
             <vm_group>
-              <name>FTD-{deployment-name}</name>
-              <image>Templates/FTDv-6_3</image>
+              <name>FTD-{$DEPLOYMENT-NAME}</name>
+              <image>Templates/{$IMAGE-NAME}</image>
               <bootup_time>900</bootup_time>
               <volumes>
                 <volume>
-                  <name>rivers142-local</name>
+                  <name>{$DATASTORE-NAME}</name>
                   <volid>1</volid>
                 </volume>
               </volumes>
               <interfaces>
                 <interface>
                   <nicid>1</nicid>
-                  <network>VM Network</network>
-                  <ip_address>{ip-address}</ip_address>
+                  <network>{$MANAGEMENT-NETWORK-NAME}</network>
+                  <ip_address>{$MANAGEMENT-NETWORK-IP-ADDRESS}</ip_address>
                 </interface>
               </interfaces>
               <kpi_data>
@@ -57,18 +57,18 @@
                   </rule>
                 </admin_rules>
               </rules>
-              <scaling>
+              <!-- scaling>
                 <min_active>1</min_active>
                 <max_active>1</max_active>
                 <elastic>true</elastic>
                 <static_ip_address_pool>
-                  <network>VM Network</network>
+                  <network>{$MANAGEMENT-NETWORK-NAME}</network>
                   <ip_address>{ip-address}</ip_address>
                 </static_ip_address_pool>
-              </scaling>
+              </scaling -->
               <placement>
                 <type>zone_host</type>
-                <zone>BOFA</zone>
+                <zone>{$CLUSTER-NAME}</zone>
               </placement>
               <recovery_policy>
                 <action_on_recovery>REBOOT_THEN_REDEPLOY</action_on_recovery>
@@ -76,27 +76,27 @@
               <config_data>
                 <configuration>
                   <dst>ovfProperty:pw</dst>
-                  <data>cisco123</data>
+                  <data>{$DEPLOY-PASSWORD}</data>
                 </configuration>
                 <configuration>
                   <dst>ovfProperty:fqdn</dst>
-                  <data>{deployment-name}.localdomain</data>
+                  <data>{$DEPLOYMENT-NAME}.localdomain</data>
                 </configuration>
                 <configuration>
                   <dst>ovfProperty:dns1</dst>
-                  <data>172.26.48.16</data>
+                  <data>{$DNS-IP-ADDRESS}</data>
                 </configuration>
                 <configuration>
                   <dst>ovfProperty:ipv4.addr</dst>
-                  <data>{ip-address}</data>
+                  <data>{$MANAGEMENT-NETWORK-IP-ADDRESS}</data>
                 </configuration>
                 <configuration>
                   <dst>ovfProperty:ipv4.mask</dst>
-                  <data>255.255.255.0</data>
+                  <data>{$MANAGEMENT-NETWORK-NETMASK}</data>
                 </configuration>
                 <configuration>
                   <dst>ovfProperty:ipv4.gw</dst>
-                  <data>172.26.14.1</data>
+                  <data>{$MANAGEMENT-NETWORK-GATEWAY-IP-ADDRESS}</data>
                 </configuration>
               </config_data>
             </vm_group>

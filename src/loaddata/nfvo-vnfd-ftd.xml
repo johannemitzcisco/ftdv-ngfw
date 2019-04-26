@@ -22,9 +22,9 @@
         <image>Templates/FTDv-6_3</image>
       </software-image-descriptor>
       <device-type xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">
-        <netconf>
-          <ned-id xmlns:ned="http://tail-f.com/ns/ncs-ned">ned:netconf</ned-id>
-        </netconf>
+        <generic>
+          <ned-id>cisco-ftd</ned-id>
+        </generic>
       </device-type>
     </vdu>
     <virtual-compute-descriptor>

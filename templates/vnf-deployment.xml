@@ -26,6 +26,9 @@
           <instantiation-level>{descriptor-instantiation-level}</instantiation-level>
           <vdu>
             <id>{descriptor-vdu}</id>
+            <!-- This doesn't work because the provisioning step needs to occur before
+                 a sync that NFVO wants to perform -->
+            <!-- managed/ -->
             <bootup-time>{bootup-time}</bootup-time>
             <recovery-wait-time>{recovery-time}</recovery-wait-time>
             <image-name>{$IMAGE-NAME}</image-name>

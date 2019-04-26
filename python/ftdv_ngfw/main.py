@@ -16,14 +16,14 @@ import collections
 # check fails immeadiately but recovery is supported in future
 
 # Can't remember how to decode the authgroup password
-nso_admin_password = 'C!sco123'
-vnf_admin_deploy_password = 'Adm!n123'
-esc_monitoring_password = 'C!sco123'
-esc_monitoring_username = 'admin'
+day0_authgroup = "ftd_day0"
+day0_admin_password = 'Adm!n123'
+day1_authgroup = "ftd"
+day1_admin_username = 'admin'
+day1_admin_password = 'C!sco123'
 provision_commit_timeout = 2000
 default_timeout = 600
-
-
+ftd_api_port = 443
 
 class ScalableService(Service):
 
@@ -73,17 +73,16 @@ class ScalableService(Service):
             vars.add('SITE-NAME', service._parent._parent.name);
             vars.add('DEPLOYMENT-TENANT', service.tenant);
             vars.add('DEPLOYMENT-NAME', service.deployment_name);
-            vars.add('DEPLOY-PASSWORD', vnf_admin_deploy_password); # admin password to set when deploy
+            vars.add('DEPLOY-PASSWORD', day0_admin_password); # admin password to set when deploy
             vars.add('MONITORS-ENABLED', 'true');
-            vars.add('MONITOR-USERNAME', esc_monitoring_username);
-            vars.add('MONITOR-PASSWORD', esc_monitoring_password);
+            vars.add('MONITOR-USERNAME', day1_admin_username);
+            vars.add('MONITOR-PASSWORD', day1_admin_password);
             vars.add('IMAGE-NAME', root.nfvo.vnfd[vnf_catalog[service.catalog_vnf].descriptor_name]
                                     .vdu[vnf_catalog[service.catalog_vnf].descriptor_vdu]
                                     .software_image_descriptor.image);
             # Set the context of the template to /vnf-manager
             template = ncs.template.Template(service._parent._parent._parent._parent)
             template.apply('vnf-deployment', vars)            
-
 
             # Gather current state of service here
             with ncs.maapi.single_read_trans('admin', 'system',
@@ -174,17 +173,55 @@ class ScalableService(Service):
             elif nfvo_deployment_status == 'error' and 'Service Update is rejected' in nfvo_deployment_status_message:
                 raise Exception('VNF Error Condition from NFVO reported: ', nfvo_deployment_status_message)
 
+            # Register devices with NSO
+            failure = False
+            all_vnfs_registered = True
+            for device in service.device:
+                # if proplistdict[str('DEVICE: '+device.name)] in ('Registered', 'Provisioned', 'Synchronized') :
+                try:
+                    pass
+                    # This is a filler call until the NED is ready
+                    # NFVO can handle initial device registration
+                    # TODO: Comment this section out when NED is ready
+                    self.log.info('Registering Device: '+device.name)
+                    vars = ncs.template.Variables()
+                    vars.add('DEVICE-NAME', device.name);
+                    vars.add('IP-ADDRESS', device.management_ip_address);
+                    vars.add('PORT', ftd_api_port);
+                    vars.add('AUTHGROUP', day0_authgroup);
+                    template = ncs.template.Template(service)
+                    template.apply('nso-device', vars)
+                except Exception as e:
+                    self.log.error(e)
+                    failure = True
+                    self.addPlanFailure(planinfo, device.name, 'registered-with-nso')
+                    self.addPlanFailure(planinfo, 'service', 'vnfs-registered-with-nso')
+                else:
+                    planinfo_devices[device.name]['registered-with-nso'] = 'COMPLETED'
+                    proplistdict[str('DEVICE: '+device.name)] = 'Registered'
+                # else:
+                #     all_vnfs_registered = False
+            if not failure and all_vnfs_registered:
+                planinfo['vnfs-registered-with-nso'] = 'COMPLETED'
+
             # Do initial provisitioning of each device
             failure = False
             proplistdict['ProvisionedVMCount'] = "0"
             for device in service.device:
                 # Call the device provisioning API directly
+                self.log.info('DeviceStatus: ' + proplistdict[str('DEVICE: ' + device.name)] + ' NFVOStatus: ' + str(nfvo_deployment_status))
                 try:
                     if proplistdict[str('DEVICE: '+device.name)] == 'Not Provisioned' and nfvo_deployment_status == 'ready':
                         self.log.info('Provisioning Device: '+device.name)
-                        self.provisionFTD(device.management_ip_address, 'admin', vnf_admin_deploy_password, nso_admin_password)
-                        #  set java-vm service-transaction-timeout 300
-                        commitDeviceChanges(self.log, device.management_ip_address, provision_commit_timeout)
+                        dev = root.devices.device[device.name]
+                        input = dev.config.cisco_ftd__ftd.actions.provision.get_input()
+                        input.acceptEULA = True
+                        input.currentPassword = day0_admin_password
+                        input.newPassword = day1_admin_password
+                        output = dev.config.cisco_ftd__ftd.actions.provision(input)
+                        dev.authgroup = day1_authgroup
+                        # self.provisionFTD(device.management_ip_address, 'admin', day0_admin_password, day1_admin_password)
+                        # commitDeviceChanges(self.log, device.management_ip_address, provision_commit_timeout)
                         proplistdict[str('DEVICE: '+device.name)] = 'Provisioned'
                 except Exception as e:
                     self.log.error(e)
@@ -196,36 +233,6 @@ class ScalableService(Service):
                     proplistdict['ProvisionedVMCount'] = str(int(proplistdict['ProvisionedVMCount']) + 1)
             if not failure and new_vm_count == int(proplistdict['ProvisionedVMCount']):
                 planinfo['vnfs-initialized'] = 'COMPLETED'
-
-            # Register devices with NSO
-            failure = False
-            all_vnfs_registered = True
-            for device in service.device:
-                if proplistdict[str('DEVICE: '+device.name)] in ('Provisioned', 'Registered', 'Synchronized') :
-                    try:
-                        # This is a filler call until the NED is ready
-                        # NFVO can handle initial device registration
-                        # TODO: Comment this section out when NED is ready
-                        self.log.info('Registering Device: '+device.name)
-                        vars = ncs.template.Variables()
-                        vars.add('DEVICE-NAME', device.name);
-                        vars.add('IP-ADDRESS', device.management_ip_address);
-                        vars.add('PORT', 443);
-                        vars.add('AUTHGROUP', vnf_authgroup);
-                        template = ncs.template.Template(service)
-                        template.apply('nso-device', vars)
-                    except Exception as e:
-                        self.log.error(e)
-                        failure = True
-                        self.addPlanFailure(planinfo, device.name, 'registered-with-nso')
-                        self.addPlanFailure(planinfo, 'service', 'vnfs-registered-with-nso')
-                    else:
-                        planinfo_devices[device.name]['registered-with-nso'] = 'COMPLETED'
-                        proplistdict[str('DEVICE: '+device.name)] = 'Registered'
-                else:
-                    all_vnfs_registered = False
-            if not failure and all_vnfs_registered:
-                planinfo['vnfs-registered-with-nso'] = 'COMPLETED'
 
             failure = False
             all_vnfs_synced = True
@@ -240,7 +247,9 @@ class ScalableService(Service):
 
                         # For now gather some data into the basic servce model
                         # TODO: comment this out when NED is ready
-                        getDeviceData(self.log, device)
+                        dev = root.devices.device[device.name]
+                        dev.sync_from()
+                        # getDeviceData(self.log, device)
                     except Exception as e:
                         self.log.error(e)
                         failure = True
@@ -278,10 +287,10 @@ class ScalableService(Service):
                 vars.add('SITE-NAME', service._parent._parent.name);
                 vars.add('DEPLOYMENT-TENANT', service.tenant);
                 vars.add('DEPLOYMENT-NAME', service.deployment_name);
-                vars.add('DEPLOY-PASSWORD', vnf_admin_deploy_password); # admin password to set when deploy
+                vars.add('DEPLOY-PASSWORD', day0_admin_password); # admin password to set when deploy
                 vars.add('MONITORS-ENABLED', 'true');
-                vars.add('MONITOR-USERNAME', esc_monitoring_username);
-                vars.add('MONITOR-PASSWORD', esc_monitoring_password);
+                vars.add('MONITOR-USERNAME', day1_admin_username);
+                vars.add('MONITOR-PASSWORD', day1_admin_password);
                 vars.add('IMAGE-NAME', root.nfvo.vnfd[vnf_catalog[service.catalog_vnf].descriptor_name]
                                         .vdu[vnf_catalog[service.catalog_vnf].descriptor_vdu]
                                         .software_image_descriptor.image);
@@ -401,12 +410,12 @@ class ScalableService(Service):
                   }
         payload["currentPassword"] = current_password
         payload["newPassword"] = new_password
-        sendRequest(self.log, ip_address, URL, 'POST', payload, password=vnf_admin_deploy_password)
+        sendRequest(self.log, ip_address, URL, 'POST', payload, password=day0_admin_password)
         self.log.info(" Device Provisining Complete")
 
 # def deployChanges():
 
-def sendRequest(log, ip_address, url_suffix, operation='GET', json_payload=None, username='admin', password=nso_admin_password):
+def sendRequest(log, ip_address, url_suffix, operation='GET', json_payload=None, username='admin', password=day1_admin_password):
     access_token = getAccessToken(log, ip_address, username, password)
     URL = 'https://{}/api/fdm/v2{}'.format(ip_address, url_suffix)
     headers = {'Content-Type' : 'application/json', 'Accept' : 'application/json', 
@@ -432,7 +441,7 @@ def sendRequest(log, ip_address, url_suffix, operation='GET', json_payload=None,
         log.error('Request Payload: ', json_payload)
         raise Exception('Bad status code: {}'.format(response.status_code))
 
-def getAccessToken(log, ip_address, username='admin', password=nso_admin_password):
+def getAccessToken(log, ip_address, username='admin', password=day1_admin_password):
     URL = 'https://{}/api/fdm/v2/fdm/token'.format(ip_address)
     payload = {'grant_type': 'password','username': username,'password': password}
     headers = {'Content-Type' : 'application/json', 'Accept' : 'application/json'}
@@ -672,8 +681,8 @@ class NGFWAdvancedService(Service):
             kicker = root.kickers.data_kicker.create('firewall-service-{}-{}-{}'.format(service.site, service.tenant, service.deployment_name))
             kicker.monitor = kick_monitor_node
             kicker.kick_node = kick_node
-            kicker.trigger_expr = kick_expr
-            kicker.trigger_type = 'enter'
+            # kicker.trigger_expr = kick_expr
+            # kicker.trigger_type = 'enter'
             kicker.action_name = 'reactive-re-deploy'
             self.log.info(str(proplistdict))
             proplist = [(k,v) for k,v in proplistdict.iteritems()]
@@ -706,8 +715,24 @@ class NGFWBasicService(Service):
     @Service.create
     def cb_create(self, tctx, root, service, proplist):
         self.log.info('Service create(service=', service._path, ')')
+        vnf_catalog = root.vnf_manager.vnf_catalog
+        site = root.vnf_manager.site[service.site]
+        management_network = site.management_network
 
         vars = ncs.template.Variables()
+        vars.add('DEPLOYMENT-NAME', service.deployment_name);
+        vars.add('DATACENTER-NAME', site.datacenter_name);
+        vars.add('DATASTORE-NAME', site.datastore_name);
+        vars.add('CLUSTER-NAME', site.cluster_name);
+        vars.add('MANAGEMENT-NETWORK-NAME', management_network.name);
+        vars.add('MANAGEMENT-NETWORK-IP-ADDRESS', service.ip_address);
+        vars.add('MANAGEMENT-NETWORK-NETMASK', management_network.netmask);
+        vars.add('MANAGEMENT-NETWORK-GATEWAY-IP-ADDRESS', management_network.gateway_ip_address);
+        vars.add('DNS-IP-ADDRESS', site.dns_ip_address);
+        vars.add('DEPLOY-PASSWORD', day0_admin_password); # admin password to set when deploy
+        vars.add('IMAGE-NAME', root.nfvo.vnfd[vnf_catalog[service.catalog_vnf].descriptor_name]
+                                .vdu[vnf_catalog[service.catalog_vnf].descriptor_vdu]
+                                .software_image_descriptor.image);
         template = ncs.template.Template(service)
         template.apply('esc-ftd-deployment', vars)
 

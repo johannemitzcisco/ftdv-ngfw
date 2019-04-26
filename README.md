@@ -97,6 +97,12 @@ There are xml files in the $NSO_PROJECT_DIR/packages/ftdv-ngfw/load-dir that nee
 </config>
 ```
 
+### 8. In NSO, create an authgroup named 'ftd' with the password 'C!sco123'.  These are hardcoded in the service python code:
+```
+admin@ncs% set devices authgroups group ftd default-map remote-name admin remote-password 'C!sco123'
+[ok][2019-04-18 18:17:50]
+```
+```
 ### 10. Confirm that there is a VNFD registered with NFVO (if not, load merge the all files in $NSO_PROJECT_DIR/packages/ftdv-ngfw/load-dir)
 Note that this is the location to bound the scaling count.  In this example the minimum is 1 and the maximum
 is 2.  Adjust as needed
@@ -119,14 +125,16 @@ Load or enter the following for example:
 <config xmlns="http://tail-f.com/ns/config/1.0">
   <vnf-manager xmlns="http://example.com/ftdv-ngfw">
   <site>
-    <name>CTO-LAB</name>
+    <name>CPOC-LAB</name>
       <vnf-deployment>
         <tenant>admin</tenant>
-        <deployment-name>ADVFTD</deployment-name>
-        <catalog-vnf refcounter="1" >FTD</catalog-vnf>
+        <deployment-name>TEST1</deployment-name>
+        <catalog-vnf>FTD</catalog-vnf>
         <scaling>
           <scale-up-threshold>2</scale-up-threshold>
           <scale-down-threshold>2</scale-down-threshold>
+          <ip-pool-start-address>172.26.14.69</ip-pool-start-address>
+          <ip-pool-end-address>172.26.14.71</ip-pool-end-address>
         </scaling>
       </vnf-deployment>
   </site>
@@ -161,15 +169,17 @@ Load or enter the following for example:
 ```
 <config xmlns="http://tail-f.com/ns/config/1.0">
   <firewall xmlns="http://example.com/ftdv-ngfw">
-  <ftdv-ngfw-advanced>
-    <site>CTO-LAB</site>
-    <tenant>admin</tenant>
-    <deployment-name>ADVFTD</deployment-name>
-    <catalog-vnf>FTD</catalog-vnf>
-    <scaling>
-      <scale-up-threshold>2</scale-up-threshold>
-      <scale-down-threshold>2</scale-down-threshold>
-    </scaling>
+    <ftdv-ngfw-advanced>
+      <site>CPOC-LAB</site>
+      <tenant>admin</tenant>
+      <deployment-name>TEST1</deployment-name>
+      <catalog-vnf>FTD</catalog-vnf>
+      <scaling>
+        <scale-up-threshold>2</scale-up-threshold>
+        <scale-down-threshold>2</scale-down-threshold>
+        <ip-pool-start-address>172.26.14.69</ip-pool-start-address>
+        <ip-pool-end-address>172.26.14.71</ip-pool-end-address>
+      </scaling>
     <access-rule>
       <name>TEST</name>
       <source-zone>inside_zone</source-zone>
@@ -205,11 +215,14 @@ admin@ncs> request vnf-manager site CTO-LAB vnf-deployment admin ADVFTD device a
 ```
 
 # TROUBLESHOOTING
-  **Problem**
-  You see the following error when executing `show vnf-manager`:
-  `plan error-info message "Transaction error"`
-  **Solution**
-  Either the java-vm/service-transaction-timeout is not set or is too low (see the file $NSO_PROJECT_DIR/packages/ftdv-ngfw/load-dir/service-timeout.xml)
+**Problem**
+You see the following error when executing:
+```
+show vnf-manager
+plan error-info message "Transaction error"
+```
+**Solution**
+Either the java-vm/service-transaction-timeout is not set or is too low (see the file $NSO_PROJECT_DIR/packages/ftdv-ngfw/load-dir/service-timeout.xml)
 
 
 

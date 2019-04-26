@@ -424,7 +424,12 @@ module ftdv-ngfw {
     list ftdv-ngfw-basic {
       description "Service to stand up a single FTDv using ESC directly";
 
-      key deployment-name;
+      key "site deployment-name";
+      leaf site {
+        type leafref {
+          path "/ftdv-ngfw:vnf-manager/ftdv-ngfw:site/ftdv-ngfw:name";
+        }
+      }
       leaf deployment-name {
         tailf:info "Unique deployment/service id";
         tailf:cli-allow-range;
@@ -434,10 +439,15 @@ module ftdv-ngfw {
       uses ncs:service-data;
       ncs:servicepoint ftdv-ngfw-servicepoint;
 
+      leaf catalog-vnf {
+        tailf:info "VNF from the catalog to deploy";
+        type leafref {
+          path "/ftdv-ngfw:vnf-manager/ftdv-ngfw:vnf-catalog/ftdv-ngfw:name";
+        }
+      }
       leaf ip-address {
         type inet:ipv4-address;
       }
-
       uses action-grouping;
       uses state-grouping;
       uses access-rule-grouping;

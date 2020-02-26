@@ -103,7 +103,7 @@ There are xml files in the $NSO_PROJECT_DIR/packages/ftdv-ngfw/load-dir that nee
 admin@ncs% set devices authgroups group ftd default-map remote-name admin remote-password 'C!sco123'
 [ok][2019-04-18 18:17:50]
 ```
-```
+
 ### 10. Confirm that there is a VNFD registered with NFVO (if not, load merge the all files in $NSO_PROJECT_DIR/packages/ftdv-ngfw/load-dir)
 Note that this is the location to bound the scaling count.  In this example the minimum is 1 and the maximum
 is 2.  Adjust as needed

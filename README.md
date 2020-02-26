@@ -49,7 +49,7 @@ curl -X POST -H "Content-Type: Application/xml" -d @metrics.xml -u admin:Cisco12
 ```
 Confirm that metric is loaded
 ```
-curl -u admin:Cisco123 http://127.0.0.1:8080/ESCManager/internal/dynamic_mapping/metrics | python -c 'import sys;import xml.dom.minidom;s=sys.stdin.read();print(xml.dom.minidom.parseString(s).toprettyxml())'
+curl -u admin:Cisco123 http://127.0.0.1:8080/ESCManager/internal/dynamic_mapping/metrics | python -c 'import sys;import xml.dom.minidom;s=sys.stdin.read();print(xml.dom.minidom.parseString(s).toprettyxml())' | grep ftd
 ```
 
 ### 4. On NSO machine, Add the following entries to ncs.conf

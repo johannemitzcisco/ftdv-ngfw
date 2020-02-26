@@ -12,9 +12,10 @@ ftdload.py script.
 
 # INSTALL INSTRUCTIONS
 ### Requirements (minimum versions)
-NSO version: 4.7.2
-NSO NFVO package version: 3.7.0
-ESC version: 4.3.0.121
+* NSO version: 4.7.2
+* NSO NFVO package version: 3.7.0
+* ESC version: 4.3.0.121
+* Pythong requests package - pip install requests
 
 ### 1. Deploy ESC
 

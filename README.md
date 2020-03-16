@@ -12,9 +12,10 @@ ftdload.py script.
 
 # INSTALL INSTRUCTIONS
 ### Requirements (minimum versions)
-NSO version: 4.7.2
-NSO NFVO package version: 3.7.0
-ESC version: 4.3.0.121
+* NSO version: 4.7.2
+* NSO NFVO package version: 3.7.0
+* ESC version: 4.3.0.121
+* Pythong requests package - pip install requests
 
 ### 1. Deploy ESC
 
@@ -49,7 +50,7 @@ curl -X POST -H "Content-Type: Application/xml" -d @metrics.xml -u admin:Cisco12
 ```
 Confirm that metric is loaded
 ```
-curl -u admin:Cisco123 http://127.0.0.1:8080/ESCManager/internal/dynamic_mapping/metrics | python -c 'import sys;import xml.dom.minidom;s=sys.stdin.read();print(xml.dom.minidom.parseString(s).toprettyxml())'
+curl -u admin:Cisco123 http://127.0.0.1:8080/ESCManager/internal/dynamic_mapping/metrics | python -c 'import sys;import xml.dom.minidom;s=sys.stdin.read();print(xml.dom.minidom.parseString(s).toprettyxml())' | grep ftd
 ```
 
 ### 4. On NSO machine, Add the following entries to ncs.conf
@@ -102,7 +103,7 @@ There are xml files in the $NSO_PROJECT_DIR/packages/ftdv-ngfw/load-dir that nee
 admin@ncs% set devices authgroups group ftd default-map remote-name admin remote-password 'C!sco123'
 [ok][2019-04-18 18:17:50]
 ```
-```
+
 ### 10. Confirm that there is a VNFD registered with NFVO (if not, load merge the all files in $NSO_PROJECT_DIR/packages/ftdv-ngfw/load-dir)
 Note that this is the location to bound the scaling count.  In this example the minimum is 1 and the maximum
 is 2.  Adjust as needed

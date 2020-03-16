@@ -59,7 +59,7 @@ module ftdv-ngfw {
   identity users-created {
     base ncs:plan-state;
   }
-  identity syncronized-with-nso {
+  identity synchronized-with-nso {
     base ncs:plan-state;
   }
 
@@ -125,6 +125,26 @@ module ftdv-ngfw {
   }
 
   grouping action-grouping {
+    tailf:action sync-vnf-with-nso {
+      tailf:actionpoint ftdv-ngfw-syncVnfWithNso-action;
+      input {
+      }
+      output {
+        leaf result {
+          type string;
+        }
+      }
+    }
+    tailf:action register-vnf-with-nso {
+      tailf:actionpoint ftdv-ngfw-registerVnfWithNso-action;
+      input {
+      }
+      output {
+        leaf result {
+          type string;
+        }
+      }
+    }
     tailf:action get-device-data {
       tailf:actionpoint ftdv-ngfw-getDeviceData-action;
       input {
@@ -237,6 +257,8 @@ module ftdv-ngfw {
         enum "Deploying";
         enum "Starting VNFs";
         enum "Provisioning";
+        enum "Provisioned";
+        enum "Synchronizing";
         enum "Configurable";
         enum "Failure";
       }

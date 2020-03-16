@@ -6,13 +6,20 @@
      <port>{$PORT}</port>
      <authgroup>{$AUTHGROUP}</authgroup>
      <device-type>
-       <netconf>
-         <ned-id xmlns:ned="http://tail-f.com/ns/ncs-ned">ned:netconf</ned-id>
-       </netconf>
+      <generic>
+       <ned-id xmlns:cisco-ftd-id="http://tail-f.com/ned/cisco-ftd-id">cisco-ftd-id:cisco-ftd</ned-id>
+      </generic>
      </device-type>
+     <connect-timeout>600</connect-timeout>
+     <trace>raw</trace>
+     <ned-settings>
+      <cisco-ftd xmlns="http://tailf.com/ned/cisco-ftd/meta">
+       <log-verbose>true</log-verbose>
+      </cisco-ftd>
+     </ned-settings>
      <state>
-       <admin-state>unlocked</admin-state>
-     </state>
+      <admin-state>unlocked</admin-state>
+    </state>
    </device>
   </devices>
 </config-template>

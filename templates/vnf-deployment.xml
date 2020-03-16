@@ -3,7 +3,7 @@
 <?save-context MANAGER?>
 <?set-context-node {site[name=$SITE-NAME]}?>
 <?save-context SITE?>
-<?set-context-node {vnf-deployment[deployment-name=$DEPLOYMENT-NAME]}?>
+<?set-context-node {vnf-deployment[tenant=$DEPLOYMENT-TENANT][deployment-name=$DEPLOYMENT-NAME]}?>
 <?save-context VNF?>
 <?switch-context MANAGER?>
 <?set-context-node {vnf-catalog[name=/site[name=$SITE-NAME]/vnf-deployment[deployment-name=$DEPLOYMENT-NAME]/catalog-vnf]}?>

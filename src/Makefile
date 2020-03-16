@@ -16,13 +16,17 @@ YANGPATH += ../../tailf-etsi-rel2-nfvo/src/yang
 NCSCPATH   = $(YANGPATH:%=--yangpath %)
 YANGERPATH = $(YANGPATH:%=--path %)
 PYTHONSRC = $(wildcard ../python/ftdv_ngfw/*.py)
+PYTHONBUILD = $(wildcard ../python/ftdv_ngfw/*.pyc)
 TEMPLATESRC = $(wildcard loaddata/*.xml)
 
-fxs: $(PYTHONSRC) $(DIRS) $(FXS) $(TEMPLATESRC)
+fxs: $(PYTHONSRC) $(PYTHONBUILD) $(DIRS) $(FXS) $(TEMPLATESRC)
 
 $(PYTHONSRC): .FORCE
 	python -m py_compile $@
 .PHONY: .FORCE
+$(PYTHONBUILD): .FORCE2
+	rm -f $@
+.PHONY: .FORCE2
 
 $(DIRS):
 	mkdir -p $@

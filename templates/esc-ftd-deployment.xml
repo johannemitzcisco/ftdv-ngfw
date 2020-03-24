@@ -31,6 +31,20 @@
                   <ip_address>{$MANAGEMENT-NETWORK-IP-ADDRESS}</ip_address>
                 </interface>
               </interfaces>
+              <interfaces>
+                <interface>
+                  <nicid>3</nicid>
+                  <network>{$INSIDE-NETWORK-NAME}</network>
+                  <ip_address>{$INSIDE-NETWORK-IP-ADDRESS}</ip_address>
+                </interface>
+              </interfaces>
+              <interfaces>
+                <interface>
+                  <nicid>4</nicid>
+                  <network>{$OUTSIDE-NETWORK-NAME}</network>
+                  <ip_address>{$OUTSIDE-NETWORK-IP-ADDRESS}</ip_address>
+                </interface>
+              </interfaces>
               <kpi_data>
                 <kpi>
                   <event_name>VM_ALIVE</event_name>

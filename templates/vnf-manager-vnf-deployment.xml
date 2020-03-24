@@ -9,8 +9,8 @@
         <scaling>
           <scale-up-threshold>{scaling/scale-up-threshold}</scale-up-threshold>
           <scale-down-threshold>{scaling/scale-down-threshold}</scale-down-threshold>
-          <ip-pool-start-address>{scaling/ip-pool-start-address}</ip-pool-start-address>
-          <ip-pool-end-address>{scaling/ip-pool-end-address}</ip-pool-end-address>
+          <mgmt-ip-pool-start-address>{scaling/mgmt-ip-pool-start-address}</mgmt-ip-pool-start-address>
+          <mgmt-ip-pool-end-address>{scaling/mgmt-ip-pool-end-address}</mgmt-ip-pool-end-address>
         </scaling>
       </vnf-deployment>
   </site>

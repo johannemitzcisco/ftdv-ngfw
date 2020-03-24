@@ -3,7 +3,7 @@
 <?save-context MANAGER?>
 <?set-context-node {site[name=$SITE-NAME]}?>
 <?save-context SITE?>
-<?set-context-node {vnf-deployment[deployment-name=$DEPLOYMENT-NAME]}?>
+<?set-context-node {vnf-deployment[tenant=$DEPLOYMENT-TENANT][deployment-name=$DEPLOYMENT-NAME]}?>
 <?save-context VNF?>
 <?switch-context MANAGER?>
 <?set-context-node {vnf-catalog[name=/site[name=$SITE-NAME]/vnf-deployment[deployment-name=$DEPLOYMENT-NAME]/catalog-vnf]}?>
@@ -26,6 +26,9 @@
           <instantiation-level>{descriptor-instantiation-level}</instantiation-level>
           <vdu>
             <id>{descriptor-vdu}</id>
+            <!-- This doesn't work because the provisioning step needs to occur before
+                 a sync that NFVO wants to perform -->
+            <!-- managed/ -->
             <bootup-time>{bootup-time}</bootup-time>
             <recovery-wait-time>{recovery-time}</recovery-wait-time>
             <image-name>{$IMAGE-NAME}</image-name>
@@ -43,8 +46,22 @@
             <internal-connection-point>
               <id>Management</id>
               <connection-point-address>
-                <start>{scaling/ip-pool-start-address}</start>
-                <end>{scaling/ip-pool-end-address}</end>
+                <start>{scaling/mgmt-ip-pool-start-address}</start>
+                <end>{scaling/mgmt-ip-pool-end-address}</end>
+              </connection-point-address>
+            </internal-connection-point>
+            <internal-connection-point>
+              <id>Inside</id>
+              <connection-point-address>
+                <start>{scaling/inside-ip-pool-start-address}</start>
+                <end>{scaling/inside-ip-pool-end-address}</end>
+              </connection-point-address>
+            </internal-connection-point>
+            <internal-connection-point>
+              <id>Outside</id>
+              <connection-point-address>
+                <start>{scaling/outside-ip-pool-start-address}</start>
+                <end>{scaling/outside-ip-pool-end-address}</end>
               </connection-point-address>
             </internal-connection-point>
 <?switch-context CATALOG?>
@@ -112,6 +129,14 @@
           <vnfd-connection-point>
             <id>Management</id>
             <network-name>{management-network/name}</network-name>
+          </vnfd-connection-point>
+          <vnfd-connection-point>
+            <id>Inside</id>
+            <network-name>{inside-network/name}</network-name>
+          </vnfd-connection-point>
+          <vnfd-connection-point>
+            <id>Outside</id>
+            <network-name>{outside-network/name}</network-name>
           </vnfd-connection-point>
         </vnf-info>
       </vnf-deployment>

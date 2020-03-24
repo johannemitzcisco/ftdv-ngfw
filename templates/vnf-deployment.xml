@@ -46,8 +46,22 @@
             <internal-connection-point>
               <id>Management</id>
               <connection-point-address>
-                <start>{scaling/ip-pool-start-address}</start>
-                <end>{scaling/ip-pool-end-address}</end>
+                <start>{scaling/mgmt-ip-pool-start-address}</start>
+                <end>{scaling/mgmt-ip-pool-end-address}</end>
+              </connection-point-address>
+            </internal-connection-point>
+            <internal-connection-point>
+              <id>Inside</id>
+              <connection-point-address>
+                <start>{scaling/inside-ip-pool-start-address}</start>
+                <end>{scaling/inside-ip-pool-end-address}</end>
+              </connection-point-address>
+            </internal-connection-point>
+            <internal-connection-point>
+              <id>Outside</id>
+              <connection-point-address>
+                <start>{scaling/outside-ip-pool-start-address}</start>
+                <end>{scaling/outside-ip-pool-end-address}</end>
               </connection-point-address>
             </internal-connection-point>
 <?switch-context CATALOG?>
@@ -115,6 +129,14 @@
           <vnfd-connection-point>
             <id>Management</id>
             <network-name>{management-network/name}</network-name>
+          </vnfd-connection-point>
+          <vnfd-connection-point>
+            <id>Inside</id>
+            <network-name>{inside-network/name}</network-name>
+          </vnfd-connection-point>
+          <vnfd-connection-point>
+            <id>Outside</id>
+            <network-name>{outside-network/name}</network-name>
           </vnfd-connection-point>
         </vnf-info>
       </vnf-deployment>

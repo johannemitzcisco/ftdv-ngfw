@@ -7,6 +7,7 @@ module ftdv-ngfw {
   import tailf-common { prefix tailf; }
   import tailf-ncs { prefix ncs; }
   import tailf-etsi-rel2-nfvo { prefix nfvo-rel2; }
+//  import intelligent-traffic-director { prefix itd; }
 
   description
     "VNF deployment service for VMWare using Cisco NFVO package";
@@ -18,7 +19,6 @@ module ftdv-ngfw {
   identity vnfs-configured {
     base ncs:plan-state;
   }
-
   identity vnfs-deployed {
     base ncs:plan-state;
   }
@@ -50,6 +50,9 @@ module ftdv-ngfw {
   identity vnf {
     base ncs:plan-component-type;
   }
+  identity deployed {
+    base ncs:plan-state;
+  }
   identity registered-with-nso {
     base ncs:plan-state;
   }
@@ -63,6 +66,28 @@ module ftdv-ngfw {
     base ncs:plan-state;
   }
 
+  grouping network-grouping {
+    leaf name {
+      tailf:info "VMware network name";
+      type string;
+      mandatory "true";
+    }
+    leaf netmask {
+      tailf:info "Netmask (ie. 255.255.255.0)";
+      type inet:ipv4-address;
+      mandatory "true";
+    }
+    leaf gateway-ip-address {
+      tailf:info "Gateway IP address";
+      type inet:ipv4-address;
+      mandatory "true";
+    }
+    leaf ip-address-resource-pool {
+      tailf:info "Resource Pool for IP addresses";
+      type string;
+      mandatory "true";
+    }
+  }
   grouping access-rule-grouping {
     list access-rule {
       key name;
@@ -237,15 +262,39 @@ module ftdv-ngfw {
         type uint8;
         must "current() > 0";
       }
-      leaf ip-pool-start-address {
-        tailf:info "IP address pool start address";
+      leaf mgmt-ip-pool-start-address {
+        tailf:info "Mananagement IP address pool start address";
         type inet:ipv4-address;
         mandatory "true";
       }
-      leaf ip-pool-end-address {
-        tailf:info "IP address pool start address";
+      leaf mgmt-ip-pool-end-address {
+        tailf:info "Management IP address pool start address";
         type inet:ipv4-address;
         mandatory "true";
+      }
+      leaf inside-ip-pool-start-address {
+        tailf:info "Inside IP address pool start address";
+        type inet:ipv4-address;
+        mandatory "true";
+      }
+      leaf inside-ip-pool-end-address {
+        tailf:info "Inside IP address pool start address";
+        type inet:ipv4-address;
+        mandatory "true";
+      }
+      leaf outside-ip-pool-start-address {
+        tailf:info "Outside IP address pool start address";
+        type inet:ipv4-address;
+        mandatory "true";
+      }
+      leaf outside-ip-pool-end-address {
+        tailf:info "Outside IP address pool start address";
+        type inet:ipv4-address;
+        mandatory "true";
+      }
+      container load-balance {
+        choice load-balancer {
+        }
       }
     }
 
@@ -264,6 +313,10 @@ module ftdv-ngfw {
       }
       default "Unknown";
     }
+    leaf status-message {
+      config "false";
+      type string;
+    }
 
     list device {
       tailf:info "Information about devices in the Deployment";
@@ -272,7 +325,37 @@ module ftdv-ngfw {
       leaf name {
         type string;
       }
+      leaf vm-name {
+        type string;
+      }
       leaf management-ip-address {
+        type string;
+      }
+      leaf inside-ip-address {
+        type string;
+      }
+      leaf outside-ip-address {
+        type string;
+      }
+      leaf status {
+        tailf:info "Status of the Deployment";
+        config "false";
+        type enumeration {
+          enum "Unknown";
+          enum "Starting";
+          enum "Registering";
+          enum "Registered";
+          enum "Provisioning";
+          enum "Provisioned";
+          enum "Synchronizing";
+          enum "Synchronized";
+          enum "Configurable";
+          enum "Failure";
+        }
+        default "Unknown";
+      }
+      leaf status-message {
+        config "false";
         type string;
       }
       uses action-grouping;
@@ -314,27 +397,16 @@ module ftdv-ngfw {
         mandatory "true";
       }
       container management-network {
-        tailf:info "Site's management network configuration";
-        leaf name {
-          tailf:info "VMware network name";
-          type string;
-          mandatory "true";
-        }
-        leaf netmask {
-          tailf:info "Netmask (ie. 255.255.255.0)";
-          type inet:ipv4-address;
-          mandatory "true";
-        }
-        leaf gateway-ip-address {
-          tailf:info "Gateway IP address";
-          type inet:ipv4-address;
-          mandatory "true";
-        }
-        leaf ip-address-resource-pool {
-          tailf:info "Resource Pool for IP addresses";
-          type string;
-          mandatory "true";
-        }
+        tailf:info "Management network configuration";
+        uses network-grouping;
+      }
+      container inside-network {
+        tailf:info "Inside network configuration";
+        uses network-grouping;
+      }
+      container outside-network {
+        tailf:info "Outside network configuration";
+        uses network-grouping;
       }
       leaf elastic-services-controller {
         tailf:info "ESC devices that manages this site";

@@ -4,6 +4,10 @@
   <description>Generated Python package</description>
   <ncs-min-version>4.7</ncs-min-version>
 
+  <required-package>
+    <name>service-base</name>
+  </required-package>
+
   <component>
     <name>main</name>
     <application>

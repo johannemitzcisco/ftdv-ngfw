@@ -12,6 +12,7 @@ FXS = $(SRC:yang/%.yang=../load-dir/%.fxs)
 ## or to other YANG files
 YANGPATH += ../../tailf-etsi-rel2-nfvo/src/yang 
 YANGPATH += ../../itd-service/src/yang 
+YANGPATH += ../../service-base/src/yang 
 # 	../../<pkt-name>/src/yang
 
 NCSCPATH   = $(YANGPATH:%=--yangpath %)

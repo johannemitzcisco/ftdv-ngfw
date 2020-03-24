@@ -7,15 +7,20 @@ module ftdv-ngfw {
   import tailf-common { prefix tailf; }
   import tailf-ncs { prefix ncs; }
   import tailf-etsi-rel2-nfvo { prefix nfvo-rel2; }
-//  import intelligent-traffic-director { prefix itd; }
-
+  import network { prefix network; }
+  
   description
     "VNF deployment service for VMWare using Cisco NFVO package";
 
+  revision 2020-03-24 {
+    description
+      "Modified ip addressing to use pools only";
+  }
   revision 2019-03-12 {
     description
       "Initial revision.";
   }
+
   identity vnfs-configured {
     base ncs:plan-state;
   }
@@ -66,28 +71,6 @@ module ftdv-ngfw {
     base ncs:plan-state;
   }
 
-  grouping network-grouping {
-    leaf name {
-      tailf:info "VMware network name";
-      type string;
-      mandatory "true";
-    }
-    leaf netmask {
-      tailf:info "Netmask (ie. 255.255.255.0)";
-      type inet:ipv4-address;
-      mandatory "true";
-    }
-    leaf gateway-ip-address {
-      tailf:info "Gateway IP address";
-      type inet:ipv4-address;
-      mandatory "true";
-    }
-    leaf ip-address-resource-pool {
-      tailf:info "Resource Pool for IP addresses";
-      type string;
-      mandatory "true";
-    }
-  }
   grouping access-rule-grouping {
     list access-rule {
       key name;
@@ -223,81 +206,57 @@ module ftdv-ngfw {
       tailf:cli-allow-range;
       type string;
     }
-
     leaf tenant {
       tailf:info "Tenant of this site and owner of the VNF";
       type leafref {
         path "/ftdv-ngfw:vnf-manager/ftdv-ngfw:site/ftdv-ngfw:tenant";
       }
     }
-
     leaf catalog-vnf {
       tailf:info "VNF from the catalog to deploy";
       type leafref {
         path "/ftdv-ngfw:vnf-manager/ftdv-ngfw:vnf-catalog/ftdv-ngfw:name";
       }
     }
-
     container scaling {
-/*
       tailf:info "Scaling attributes for the VNF";
-      leaf minimum {
+      leaf minimum-vnfs {
         tailf:info "Minumum number of VNFs to deploy";
         type uint8;
         must "current() > 0";
       }
-      leaf maximum {
+      leaf maximum-vnfs {
         tailf:info "Minumum number of VNFs to deploy";
         type uint8;
-        must "current() >= ../minimum";
+        must "current() >= ../minimum-vnfs";
       }
-*/
-      leaf scale-up-threshold {
-        tailf:info "Threshold to signal addition VNFs are needed";
-        type uint8;
-        must "current() > 0";
+      container threshold {
+        leaf scale-up {
+          tailf:info "Threshold to signal addition VNFs are needed";
+          type uint8;
+          must "current() > 0";
+        }
+        leaf scale-down {
+          tailf:info "Threshold to signal that VNFs can be decommissioned";
+          type uint8;
+          must "current() > 0";
+        }
       }
-      leaf scale-down-threshold {
-        tailf:info "Threshold to signal that VNFs can be decommissioned";
-        type uint8;
-        must "current() > 0";
-      }
-      leaf mgmt-ip-pool-start-address {
-        tailf:info "Mananagement IP address pool start address";
-        type inet:ipv4-address;
-        mandatory "true";
-      }
-      leaf mgmt-ip-pool-end-address {
-        tailf:info "Management IP address pool start address";
-        type inet:ipv4-address;
-        mandatory "true";
-      }
-      leaf inside-ip-pool-start-address {
-        tailf:info "Inside IP address pool start address";
-        type inet:ipv4-address;
-        mandatory "true";
-      }
-      leaf inside-ip-pool-end-address {
-        tailf:info "Inside IP address pool start address";
-        type inet:ipv4-address;
-        mandatory "true";
-      }
-      leaf outside-ip-pool-start-address {
-        tailf:info "Outside IP address pool start address";
-        type inet:ipv4-address;
-        mandatory "true";
-      }
-      leaf outside-ip-pool-end-address {
-        tailf:info "Outside IP address pool start address";
-        type inet:ipv4-address;
-        mandatory "true";
+      container networks {
+        list network {
+          key name;
+          leaf name {
+            type leafref {
+              path "../../../../../networks/network/name";
+            }
+          }
+        }
       }
       container load-balance {
         choice load-balancer {
         }
       }
     }
-
     leaf status {
       tailf:info "Status of the Deployment (inclusive of all VNFs)";
       config "false";
@@ -317,7 +276,6 @@ module ftdv-ngfw {
       config "false";
       type string;
     }
-
     list device {
       tailf:info "Information about devices in the Deployment";
       config "false";
@@ -396,17 +354,19 @@ module ftdv-ngfw {
         type inet:ipv4-address;
         mandatory "true";
       }
-      container management-network {
-        tailf:info "Management network configuration";
-        uses network-grouping;
-      }
-      container inside-network {
-        tailf:info "Inside network configuration";
-        uses network-grouping;
-      }
-      container outside-network {
-        tailf:info "Outside network configuration";
-        uses network-grouping;
+      container networks {
+        list network {
+          key name;
+          uses network:network {
+            refine name {
+              description "Name of the NFVO VNFD external connection point";
+            }
+          }
+          leaf VMware-name {
+            tailf:info "VMware network name";
+            type string;
+          }
+        }
       }
       leaf elastic-services-controller {
         tailf:info "ESC devices that manages this site";
@@ -431,6 +391,11 @@ module ftdv-ngfw {
         key "tenant deployment-name";
         uses vnf-deployment-grouping;
       }
+    }
+    container config {
+       description 
+         "This container provides a place for other modules that are augmenting
+          to place any configuration information that they may require";
     }
 
     list vnf-catalog {
@@ -495,7 +460,7 @@ module ftdv-ngfw {
       }
     }
   }
-
+/*
   container firewall {
     list ftdv-ngfw-advanced {
       description "Service to stand up a FTDv with automated scaling and load balancing";
@@ -546,11 +511,6 @@ module ftdv-ngfw {
       uses state-grouping;
       uses access-rule-grouping;
     }
-
-
   }
-
-
-
-
+*/
 }

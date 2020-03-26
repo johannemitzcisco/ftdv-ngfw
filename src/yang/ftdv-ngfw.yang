@@ -21,7 +21,10 @@ module ftdv-ngfw {
       "Initial revision.";
   }
 
-  identity vnfs-configured {
+  identity ip-addressing {
+    base ncs:plan-state;
+  }
+  identity vnfs-initialized {
     base ncs:plan-state;
   }
   identity vnfs-deployed {
@@ -36,9 +39,6 @@ module ftdv-ngfw {
   identity vnfs-registered-with-nso {
     base ncs:plan-state;
   }
-  identity vnfs-initialized {
-    base ncs:plan-state;
-  }
   identity scaling-monitoring-enabled {
     base ncs:plan-state;
   }
@@ -48,7 +48,7 @@ module ftdv-ngfw {
   identity vnfs-synchronized-with-nso {
     base ncs:plan-state;
   }
-  identity itd-configured {
+  identity load-balancing-configured {
     base ncs:plan-state;
   }
 
@@ -56,6 +56,9 @@ module ftdv-ngfw {
     base ncs:plan-component-type;
   }
   identity deployed {
+    base ncs:plan-state;
+  }
+  identity api-available {
     base ncs:plan-state;
   }
   identity registered-with-nso {
@@ -220,16 +223,6 @@ module ftdv-ngfw {
     }
     container scaling {
       tailf:info "Scaling attributes for the VNF";
-      leaf minimum-vnfs {
-        tailf:info "Minumum number of VNFs to deploy";
-        type uint8;
-        must "current() > 0";
-      }
-      leaf maximum-vnfs {
-        tailf:info "Minumum number of VNFs to deploy";
-        type uint8;
-        must "current() >= ../minimum-vnfs";
-      }
       container threshold {
         leaf scale-up {
           tailf:info "Threshold to signal addition VNFs are needed";
@@ -246,8 +239,23 @@ module ftdv-ngfw {
         list network {
           key name;
           leaf name {
+// TODO: Need to put in a check that vnf-catalog item being used
+//       has all its networks represented here as the vnf-deployment.xml
+//       is expecting it
             type leafref {
               path "../../../../../networks/network/name";
+            }
+          }
+          container resource-pool-allocation {
+            config "false";
+            leaf name {
+              type string;
+            }
+            leaf ip-address-start {
+              type inet:ip-address-no-zone;
+            }
+            leaf ip-address-end {
+              type inet:ip-address-no-zone;
             }
           }
         }
@@ -262,6 +270,7 @@ module ftdv-ngfw {
       config "false";
       type enumeration {
         enum "Unknown";
+        enum "Initializing";
         enum "Deploying";
         enum "Starting VNFs";
         enum "Provisioning";
@@ -349,17 +358,18 @@ module ftdv-ngfw {
         type string;
         mandatory "true";
       }
-      leaf dns-ip-address {
-        tailf:info "DNS server IP address";
-        type inet:ipv4-address;
-        mandatory "true";
-      }
       container networks {
         list network {
+//TODO: Need to add constraint so that there is at least one network
+//      name 'Management' as this is used in vnf-manager-vnf-deployment.xml
+//      template.
           key name;
           uses network:network {
             refine name {
               description "Name of the NFVO VNFD external connection point";
+            }
+            refine resource-pool/name {
+              config "false";
             }
           }
           leaf VMware-name {

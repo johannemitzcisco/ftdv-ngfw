@@ -46,22 +46,22 @@
             <internal-connection-point>
               <id>Management</id>
               <connection-point-address>
-                <start>{scaling/mgmt-ip-pool-start-address}</start>
-                <end>{scaling/mgmt-ip-pool-end-address}</end>
+                <start>{scaling/networks/network[name='Management']/resource-pool-allocation/ip-address-start}</start>
+                <end>{scaling/networks/network[name='Management']/resource-pool-allocation/ip-address-end}</end>
               </connection-point-address>
             </internal-connection-point>
             <internal-connection-point>
               <id>Inside</id>
               <connection-point-address>
-                <start>{scaling/inside-ip-pool-start-address}</start>
-                <end>{scaling/inside-ip-pool-end-address}</end>
+                <start>{scaling/networks/network[name='Inside']/resource-pool-allocation/ip-address-start}</start>
+                <end>{scaling/networks/network[name='Inside']/resource-pool-allocation/ip-address-end}</end>
               </connection-point-address>
             </internal-connection-point>
             <internal-connection-point>
               <id>Outside</id>
               <connection-point-address>
-                <start>{scaling/outside-ip-pool-start-address}</start>
-                <end>{scaling/outside-ip-pool-end-address}</end>
+                <start>{scaling/networks/network[name='Outside']/resource-pool-allocation/ip-address-start}</start>
+                <end>{scaling/networks/network[name='Outside']/resource-pool-allocation/ip-address-end}</end>
               </connection-point-address>
             </internal-connection-point>
 <?switch-context CATALOG?>
@@ -84,19 +84,19 @@
               </variable>
               <variable>
                 <name>DNS_SERVER_IP</name>
-                <value>{dns-ip-address}</value>
+                <value>{networks/network[name='Management']/dns-ip-address}</value>
               </variable>
               <variable>
                 <name>GATEWAY_IP_ADDRESS</name>
-                <value>{management-network/gateway-ip-address}</value>
+                <value>{networks/network[name='Management']/gateway-ip-address}</value>
               </variable>
               <variable>
                 <name>MGMT_IP_NETMASK</name>
-                <value>{management-network/netmask}</value>
+                <value>{networks/network[name='Management']/netmask}</value>
               </variable>
               <variable>
                 <name>MGMT_NETWORK_NAME</name>
-                <value>{management-network/name}</value>
+                <value>{networks/network[name='Management']/VMware-name}</value>
               </variable>
               <variable>
                 <name>DEPLOY_VNF_PASSWORD</name>
@@ -117,26 +117,26 @@
 <?switch-context VNF?>
               <variable>
                 <name>SCALEUP_THRESHOLD</name>
-                <value>{scaling/scale-up-threshold}</value>
+                <value>{scaling/threshold/scale-up}</value>
               </variable>
               <variable>
                 <name>SCALEDOWN_THRESHOLD</name>
-                <value>{scaling/scale-down-threshold}</value>
+                <value>{scaling/threshold/scale-down}</value>
               </variable>
             </esc-device-template>
           </vdu>
 <?switch-context SITE?>
           <vnfd-connection-point>
             <id>Management</id>
-            <network-name>{management-network/name}</network-name>
+            <network-name>{networks/network[name='Management']/VMware-name}</network-name>
           </vnfd-connection-point>
           <vnfd-connection-point>
             <id>Inside</id>
-            <network-name>{inside-network/name}</network-name>
+            <network-name>{networks/network[name='Inside']/VMware-name}</network-name>
           </vnfd-connection-point>
           <vnfd-connection-point>
             <id>Outside</id>
-            <network-name>{outside-network/name}</network-name>
+            <network-name>{networks/network[name='Outside']/VMware-name}</network-name>
           </vnfd-connection-point>
         </vnf-info>
       </vnf-deployment>

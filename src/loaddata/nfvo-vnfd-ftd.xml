@@ -3,23 +3,103 @@
   <vnfd>
     <id>Cisco-FTD</id>
     <product-name>Virtual NGFW</product-name>
-    <version>6.2.3-83</version>
+    <version>6.5</version>
     <product-info-description>Virtual Next Generation Firewall</product-info-description>
     <vdu>
-      <id>VMWARE</id>
+      <id>Small</id>
       <internal-connection-point-descriptor>
         <id>Management</id>
         <external-connection-point-descriptor>Management</external-connection-point-descriptor>
         <layer-protocol>Ethernet</layer-protocol>
         <interface-id xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">1</interface-id>
       </internal-connection-point-descriptor>
-      <virtual-compute-descriptor>vcd</virtual-compute-descriptor>
+      <internal-connection-point-descriptor>
+        <id>Inside</id>
+        <external-connection-point-descriptor>Inside</external-connection-point-descriptor>
+        <layer-protocol>Ethernet</layer-protocol>
+        <interface-id xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">3</interface-id>
+      </internal-connection-point-descriptor>
+      <internal-connection-point-descriptor>
+        <id>Outside</id>
+        <external-connection-point-descriptor>Outside</external-connection-point-descriptor>
+        <layer-protocol>Ethernet</layer-protocol>
+        <interface-id xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">4</interface-id>
+      </internal-connection-point-descriptor>
+      <virtual-compute-descriptor>Small</virtual-compute-descriptor>
       <virtual-storage-descriptor>root</virtual-storage-descriptor>
       <software-image-descriptor>
-        <name>FTDv-6_3</name>
+        <name>FTDv-6_5_0</name>
         <container-format>ovf</container-format>
         <disk-format>vmdk</disk-format>
-        <image>Templates/FTDv-6_3</image>
+        <image>FTDv-6.5.0-115-Template</image>
+      </software-image-descriptor>
+      <device-type xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">
+        <generic>
+          <ned-id>cisco-ftd</ned-id>
+        </generic>
+      </device-type>
+    </vdu>
+    <vdu>
+      <id>Medium</id>
+      <internal-connection-point-descriptor>
+        <id>Management</id>
+        <external-connection-point-descriptor>Management</external-connection-point-descriptor>
+        <layer-protocol>Ethernet</layer-protocol>
+        <interface-id xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">1</interface-id>
+      </internal-connection-point-descriptor>
+      <internal-connection-point-descriptor>
+        <id>Inside</id>
+        <external-connection-point-descriptor>Inside</external-connection-point-descriptor>
+        <layer-protocol>Ethernet</layer-protocol>
+        <interface-id xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">3</interface-id>
+      </internal-connection-point-descriptor>
+      <internal-connection-point-descriptor>
+        <id>Outside</id>
+        <external-connection-point-descriptor>Outside</external-connection-point-descriptor>
+        <layer-protocol>Ethernet</layer-protocol>
+        <interface-id xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">4</interface-id>
+      </internal-connection-point-descriptor>
+      <virtual-compute-descriptor>Medium</virtual-compute-descriptor>
+      <virtual-storage-descriptor>root</virtual-storage-descriptor>
+      <software-image-descriptor>
+        <name>FTDv-6_5_0</name>
+        <container-format>ovf</container-format>
+        <disk-format>vmdk</disk-format>
+        <image>FTDv-6.5.0-115-Template</image>
+      </software-image-descriptor>
+      <device-type xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">
+        <generic>
+          <ned-id>cisco-ftd</ned-id>
+        </generic>
+      </device-type>
+    </vdu>
+    <vdu>
+      <id>Large</id>
+      <internal-connection-point-descriptor>
+        <id>Management</id>
+        <external-connection-point-descriptor>Management</external-connection-point-descriptor>
+        <layer-protocol>Ethernet</layer-protocol>
+        <interface-id xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">1</interface-id>
+      </internal-connection-point-descriptor>
+      <internal-connection-point-descriptor>
+        <id>Inside</id>
+        <external-connection-point-descriptor>Inside</external-connection-point-descriptor>
+        <layer-protocol>Ethernet</layer-protocol>
+        <interface-id xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">3</interface-id>
+      </internal-connection-point-descriptor>
+      <internal-connection-point-descriptor>
+        <id>Outside</id>
+        <external-connection-point-descriptor>Outside</external-connection-point-descriptor>
+        <layer-protocol>Ethernet</layer-protocol>
+        <interface-id xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">4</interface-id>
+      </internal-connection-point-descriptor>
+      <virtual-compute-descriptor>Large</virtual-compute-descriptor>
+      <virtual-storage-descriptor>root</virtual-storage-descriptor>
+      <software-image-descriptor>
+        <name>FTDv-6_5_0</name>
+        <container-format>ovf</container-format>
+        <disk-format>vmdk</disk-format>
+        <image>FTDv-6.5.0-115-Template</image>
       </software-image-descriptor>
       <device-type xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">
         <generic>
@@ -28,12 +108,30 @@
       </device-type>
     </vdu>
     <virtual-compute-descriptor>
-      <id>vcd</id>
+      <id>Small</id>
       <virtual-memory>
         <virtual-memory-size>8.0</virtual-memory-size>
       </virtual-memory>
       <virtual-cpu>
         <number-of-virtual-cpus>4</number-of-virtual-cpus>
+      </virtual-cpu>
+    </virtual-compute-descriptor>
+    <virtual-compute-descriptor>
+      <id>Medium</id>
+      <virtual-memory>
+        <virtual-memory-size>16.0</virtual-memory-size>
+      </virtual-memory>
+      <virtual-cpu>
+        <number-of-virtual-cpus>8</number-of-virtual-cpus>
+      </virtual-cpu>
+    </virtual-compute-descriptor>
+    <virtual-compute-descriptor>
+      <id>Large</id>
+      <virtual-memory>
+        <virtual-memory-size>24.0</virtual-memory-size>
+      </virtual-memory>
+      <virtual-cpu>
+        <number-of-virtual-cpus>16</number-of-virtual-cpus>
       </virtual-cpu>
     </virtual-compute-descriptor>
     <virtual-storage-descriptor>
@@ -46,21 +144,43 @@
       <layer-protocol>Ethernet</layer-protocol>
       <management xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc"/>
     </external-connection-point-descriptor>
+    <external-connection-point-descriptor>
+      <id>Inside</id>
+      <layer-protocol>Ethernet</layer-protocol>
+    </external-connection-point-descriptor>
+    <external-connection-point-descriptor>
+      <id>Outside</id>
+      <layer-protocol>Ethernet</layer-protocol>
+    </external-connection-point-descriptor>
     <deployment-flavor>
-      <id>VMWARE</id>
+      <id>Small</id>
       <vdu-profile>
-        <vdu>VMWARE</vdu>
+        <vdu>Small</vdu>
         <min-number-of-instances>1</min-number-of-instances>
         <max-number-of-instances>2</max-number-of-instances>
       </vdu-profile>
       <instantiation-level>
-        <id>Cisco-FTD</id>
+        <id>Small</id>
         <vdu-level>
-          <vdu>VMWARE</vdu>
+          <vdu>Small</vdu>
           <number-of-instances>1</number-of-instances>
         </vdu-level>
       </instantiation-level>
-      <default-instantiation-level>Cisco-FTD</default-instantiation-level>
+      <!-- instantiation-level>
+        <id>Scalable</id>
+        <vdu-level>
+          <vdu>Small</vdu>
+          <number-of-instances>1</number-of-instances>
+        </vdu-level>
+      </instantiation-level>
+      <instantiation-level>
+        <id>FullDeployment</id>
+        <vdu-level>
+          <vdu>Small</vdu>
+          <number-of-instances>2</number-of-instances>
+        </vdu-level>
+      </instantiation-level -->
+      <default-instantiation-level>Small</default-instantiation-level>
     </deployment-flavor>
   </vnfd>
   </nfvo>

@@ -263,11 +263,22 @@ module ftdv-ngfw {
       container load-balance {
         choice load-balancer {
         }
+        leaf status {
+          config "false";
+          type enumeration {
+            enum "Unknown";
+            enum "Disabled";
+            enum "Initialized";
+            enum "Enabled";
+            enum "Error";
+          }
+          default "Unknown";
+        }
       }
     }
     leaf status {
       tailf:info "Status of the Deployment (inclusive of all VNFs)";
-      config "false";
+//      config "false";
       type enumeration {
         enum "Unknown";
         enum "Initializing";
@@ -277,6 +288,7 @@ module ftdv-ngfw {
         enum "Provisioned";
         enum "Synchronizing";
         enum "Configurable";
+        enum "LoadBalanced";
         enum "Failure";
       }
       default "Unknown";

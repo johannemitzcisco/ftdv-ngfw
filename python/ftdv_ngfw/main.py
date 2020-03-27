@@ -2,7 +2,7 @@
 import ncs
 import ncs.maapi
 from ncs.application import Service, PlanComponent
-from ncs.dp import Action, NCS_SERVICE_UPDATE
+from ncs.dp import Action
 import _ncs.dp
 import requests 
 import traceback
@@ -69,8 +69,6 @@ class ScalableService(Service):
               root.devices.authgroups.group[vnf_authgroup].default_map.remote_name is None:
                 self.addPlanFailure(planinfo, 'service', 'init')
                 raise Exception('Remote Name in Default Map or authgroup {} not configure'.format(vnf_authgroup))
-
-            nso_admin_user = root.devices.authgroups.group[vnf_authgroup].default_map.remote_name
 
             # First step is to make sure that the sites ip address pools are instantiated
             for network in service.scaling.networks.network:
@@ -155,6 +153,19 @@ class ScalableService(Service):
                 failure = True
                 self.addPlanFailure(planinfo, 'service', 'vnfs-deployed')
 
+            # Initialize plug-ins
+            # Load balancer
+            planinfo['load-balancing-configured'] = 'DISABLED'
+            for loadbalancer in service.scaling.load_balance:
+                if str(loadbalancer) != 'ftdv-ngfw:load-balancer':
+                    #loadbalancer = a
+                    service.scaling.load_balance.__getitem__(loadbalancer).initialize()
+                    planinfo['load-balancing-configured'] = 'INITIALIZED'
+                    break
+            if planinfo['load-balancing-configured'] == 'DISABLED':
+                service.scaling.load_balance.status = 'Disabled'
+            #lb_node = service.scaling.load_balance.__getitem__(loadbalancer)
+            #lb_node.initialize()
 
             # Gather current state of service here
             with ncs.maapi.single_write_trans('admin', 'system',
@@ -387,45 +398,11 @@ class ScalableService(Service):
                 planinfo['vnfs-synchronized-with-nso'] = 'COMPLETED'
                 service.status = 'Configurable'
 
-            # When more than one VNF is running, or the vm count goes down to 1 reconfigure ITD
-            failure = False
-            configured = True
-            if new_vm_count is not None and new_vm_count > 0 and nfvo_deployment_status == 'ready':
-#            if new_vm_count is not None and nfvo_deployment_status == 'ready' and \
-#               ((new_vm_count > 1 and new_vm_count > vm_count) or new_vm_count < vm_count):
-                try:
-                    for service_device in service.device:
-                        for side in service.scaling.load_balance.nexus_intelligent_traffic_director.sides:
-                            for nexus_device in site.intelligent_traffic_director.devices:
-                                if nexus_device.side == side.side:
-                                    vars = ncs.template.Variables()
-                                    vars.add('SERVICE-NAME', service.deployment_name)
-                                    vars.add('DEVICE-NAME', nexus_device.device)
-                                    vars.add('SIDE', side.side)
-                                    vars.add('INGRESS-INTERFACE-NAME', side.ingress_interface)
-                                    vars.add('SERVICE-IP-ADDRESS', side.virtual_ip)
-                                    vars.add('SERVICE-IP-MASK', side.virtual_ip_mask)
-                                    if side.side == 'inside':
-                                        address = service_device.inside_ip_address
-                                    else:
-                                        address = service_device.outside_ip_address
-                                    vars.add('NODE-IP', address)
-                                    vars.add('SERVICE-BUCKET-COUNT', side.buckets);
-                                    # Set the context of the template to /vnf-manager
-                                    template = ncs.template.Template(service)
-                                    template.apply('itd-service', vars)
-                                    self.log.info("ITD Add: {} {} {} {}".format(nexus_device.device, service_device.name, side.side, address))
-                except Exception as e:
-                    self.log.error(e)
-                    self.log.error(traceback.format_exc())
-                    failure = True
-                    self.addPlanFailure(planinfo, 'service', 'load-balancing-configured')
-            else:
-                configured = False
-                self.log.info("ITD NOT Configured")
-            if not failure and configured:
+            if service.scaling.load_balance.status == 'Enabled':
                 self.log.info("ITD Configured")
                 planinfo['load-balancing-configured'] = 'COMPLETED'
+            else:
+                self.log.info("ITD Not Configured")
 
             # Add scaling monitoring when VNFs are provisioned or anytime after Monitoring
             # is initially turned on
@@ -466,6 +443,7 @@ class ScalableService(Service):
             # Apply kicker to monitor for nfvo scaling and recovery events
             self.applyServiceKicker(root, self.log, service.deployment_name, site.name, service.tenant,
                                     service.deployment_name, site.elastic_services_controller)
+            #service.status = 'Provisioned'
         except Exception as e:
             self.log.error("Exception Here:")
             self.log.info(e)
@@ -495,7 +473,8 @@ class ScalableService(Service):
         self_plan.append_state('ftdv-ngfw:vnfs-initialized')
         self_plan.append_state('ftdv-ngfw:vnfs-synchronized-with-nso')
         self_plan.append_state('ftdv-ngfw:scaling-monitoring-enabled')
-        self_plan.append_state('ftdv-ngfw:load-balancing-configured')
+        if planinfo.get('load-balancing-configured', '') != 'DISABLED':
+            self_plan.append_state('ftdv-ngfw:load-balancing-configured')
         self_plan.append_state('ncs:ready')
         self_plan.set_reached('ncs:init')
 
@@ -569,7 +548,7 @@ class ScalableService(Service):
         kick_node = ("/vnf-manager/site[name='{}']/vnf-deployment[tenant='{}'][deployment-name='{}']/device[name='{}']").format(
                      site_name, tenant, service_deployment_name, device_name)
         self.applyKicker(root, log, vnf_deployment_name, site_name, tenant, service_deployment_name,
-                         esc_device_name, 'sync-vnf-with-nso', 2, kick_monitor_node, kick_node, 'vnfdeviceProvisioned', trigger_expr)
+                         esc_device_name, 'sync-vnf-with-nso', 5, kick_monitor_node, kick_node, 'vnfdeviceProvisioned', trigger_expr)
 
     def applyDeviceSyncedKicker(self, root, log, vnf_deployment_name, site_name, tenant, service_deployment_name,
                     esc_device_name, device_name):
@@ -581,7 +560,7 @@ class ScalableService(Service):
         kick_node = ("/vnf-manager/site[name='{}']/vnf-deployment[tenant='{}'][deployment-name='{}']").format(
                      site_name, tenant, service_deployment_name)
         self.applyKicker(root, log, vnf_deployment_name, site_name, tenant, service_deployment_name,
-                         esc_device_name, 'reactive-re-deploy', 1, kick_monitor_node, kick_node, 'vnfdeviceSynced', trigger_expr)
+                         esc_device_name, 'reactive-re-deploy', 4, kick_monitor_node, kick_node, 'vnfdeviceSynced', trigger_expr)
 
     def applyRegisterDeviceKicker(self, root, log, vnf_deployment_name, site_name, tenant, service_deployment_name,
                                   esc_device_name, vdu, device_name):

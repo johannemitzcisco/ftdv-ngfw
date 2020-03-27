@@ -1,0 +1,24 @@
+<config xmlns="http://tail-f.com/ns/config/1.0">
+  <vnf-manager xmlns="http://example.com/ftdv-ngfw">
+  <vnf-catalog>
+    <name>Cisco-FTD-Small-FullDeployment</name>
+    <descriptor-name>Cisco-FTD</descriptor-name>
+    <descriptor-flavor>Small</descriptor-flavor>
+    <descriptor-instantiation-level>FullDeployment</descriptor-instantiation-level>
+    <descriptor-vdu>Small</descriptor-vdu>
+    <bootup-time>1800</bootup-time>
+    <recovery-time>1800</recovery-time>
+    <authgroup>ftd</authgroup>
+  </vnf-catalog>
+  <vnf-catalog>
+    <name>Cisco-FTD-Small-Scalable</name>
+    <descriptor-name>Cisco-FTD</descriptor-name>
+    <descriptor-flavor>Small</descriptor-flavor>
+    <descriptor-instantiation-level>Scalable</descriptor-instantiation-level>
+    <descriptor-vdu>Small</descriptor-vdu>
+    <bootup-time>1800</bootup-time>
+    <recovery-time>1800</recovery-time>
+    <authgroup>ftd</authgroup>
+  </vnf-catalog>
+  </vnf-manager>
+</config>

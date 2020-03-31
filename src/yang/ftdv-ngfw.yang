@@ -73,6 +73,9 @@ module ftdv-ngfw {
   identity synchronized-with-nso {
     base ncs:plan-state;
   }
+  identity configurable {
+    base ncs:plan-state;
+  }
 
   grouping access-rule-grouping {
     list access-rule {
@@ -138,8 +141,7 @@ module ftdv-ngfw {
   grouping action-grouping {
     tailf:action sync-vnf-with-nso {
       tailf:actionpoint ftdv-ngfw-syncVnfWithNso-action;
-      input {
-      }
+      input {}
       output {
         leaf result {
           type string;
@@ -148,8 +150,7 @@ module ftdv-ngfw {
     }
     tailf:action register-vnf-with-nso {
       tailf:actionpoint ftdv-ngfw-registerVnfWithNso-action;
-      input {
-      }
+      input {}
       output {
         leaf result {
           type string;
@@ -158,8 +159,7 @@ module ftdv-ngfw {
     }
     tailf:action get-device-data {
       tailf:actionpoint ftdv-ngfw-getDeviceData-action;
-      input {
-      }
+      input {}
       output {
         leaf result {
           type string;
@@ -247,15 +247,13 @@ module ftdv-ngfw {
             }
           }
           container resource-pool-allocation {
-            config "false";
-            leaf name {
-              type string;
-            }
-            leaf ip-address-start {
-              type inet:ip-address-no-zone;
-            }
-            leaf ip-address-end {
-              type inet:ip-address-no-zone;
+            uses network:network-allocation-grouping {
+              refine first-address {
+                config "false";
+              }
+              refine last-address {
+                config "false";
+              }
             }
           }
         }
@@ -267,10 +265,10 @@ module ftdv-ngfw {
           config "false";
           type enumeration {
             enum "Unknown";
-            enum "Disabled";
             enum "Initialized";
             enum "Enabled";
-            enum "Error";
+            enum "Disabled";
+            enum "Failure";
           }
           default "Unknown";
         }
@@ -278,7 +276,7 @@ module ftdv-ngfw {
     }
     leaf status {
       tailf:info "Status of the Deployment (inclusive of all VNFs)";
-//      config "false";
+      //config "false";
       type enumeration {
         enum "Unknown";
         enum "Initializing";
@@ -287,8 +285,8 @@ module ftdv-ngfw {
         enum "Provisioning";
         enum "Provisioned";
         enum "Synchronizing";
+        enum "Synchronized";
         enum "Configurable";
-        enum "LoadBalanced";
         enum "Failure";
       }
       default "Unknown";
@@ -307,6 +305,9 @@ module ftdv-ngfw {
       leaf vm-name {
         type string;
       }
+      leaf vmid {
+        type string;
+      }
       leaf management-ip-address {
         type string;
       }
@@ -321,7 +322,9 @@ module ftdv-ngfw {
         config "false";
         type enumeration {
           enum "Unknown";
+          enum "Deploying";
           enum "Starting";
+          enum "Initializing";
           enum "Registering";
           enum "Registered";
           enum "Provisioning";
@@ -376,7 +379,7 @@ module ftdv-ngfw {
 //      name 'Management' as this is used in vnf-manager-vnf-deployment.xml
 //      template.
           key name;
-          uses network:network {
+          uses network:network-grouping {
             refine name {
               description "Name of the NFVO VNFD external connection point";
             }
@@ -486,7 +489,6 @@ module ftdv-ngfw {
   container firewall {
     list ftdv-ngfw-advanced {
       description "Service to stand up a FTDv with automated scaling and load balancing";
-
       key "site tenant deployment-name";
       leaf site {
         type leafref {
@@ -497,14 +499,11 @@ module ftdv-ngfw {
       uses ncs:service-progress-monitoring-data;
       uses ncs:service-data;
       ncs:servicepoint ftdv-ngfw-advanced-servicepoint;
-
       uses vnf-deployment-grouping;
       uses access-rule-grouping;
     }
-
     list ftdv-ngfw-basic {
       description "Service to stand up a single FTDv using ESC directly";
-
       key "site deployment-name";
       leaf site {
         type leafref {
@@ -516,10 +515,8 @@ module ftdv-ngfw {
         tailf:cli-allow-range;
         type string;
       }
-
       uses ncs:service-data;
       ncs:servicepoint ftdv-ngfw-servicepoint;
-
       leaf catalog-vnf {
         tailf:info "VNF from the catalog to deploy";
         type leafref {

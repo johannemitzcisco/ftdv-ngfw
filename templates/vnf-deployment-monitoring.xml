@@ -46,22 +46,22 @@
             <internal-connection-point>
               <id>Management</id>
               <connection-point-address>
-                <start>{scaling/networks/network[name='Management']/resource-pool-allocation/ip-address-start}</start>
-                <end>{scaling/networks/network[name='Management']/resource-pool-allocation/ip-address-end}</end>
+                <start>{scaling/networks/network[name='Management']/resource-pool-allocation/first-address}</start>
+                <end>{scaling/networks/network[name='Management']/resource-pool-allocation/last-address}</end>
               </connection-point-address>
             </internal-connection-point>
             <internal-connection-point>
               <id>Inside</id>
               <connection-point-address>
-                <start>{scaling/networks/network[name='Inside']/resource-pool-allocation/ip-address-start}</start>
-                <end>{scaling/networks/network[name='Inside']/resource-pool-allocation/ip-address-end}</end>
+                <start>{scaling/networks/network[name='Inside']/resource-pool-allocation/first-address}</start>
+                <end>{scaling/networks/network[name='Inside']/resource-pool-allocation/last-address}</end>
               </connection-point-address>
             </internal-connection-point>
             <internal-connection-point>
               <id>Outside</id>
               <connection-point-address>
-                <start>{scaling/networks/network[name='Outside']/resource-pool-allocation/ip-address-start}</start>
-                <end>{scaling/networks/network[name='Outside']/resource-pool-allocation/ip-address-end}</end>
+                <start>{scaling/networks/network[name='Outside']/resource-pool-allocation/first-address}</start>
+                <end>{scaling/networks/network[name='Outside']/resource-pool-allocation/last-address}</end>
               </connection-point-address>
             </internal-connection-point>
 <?switch-context CATALOG?>

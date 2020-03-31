@@ -404,6 +404,17 @@ module ftdv-ngfw {
   //      }
         mandatory "true";
       }
+      container managers {
+        list manager {
+          key name;
+          leaf name {
+            type leafref {
+              path "/ncs:devices/ncs:device/ncs:name";
+            }
+          }
+        }
+      }
+
       list vnf-deployment {
         description "Service to stand up scalable FTDv using NFVO Service Pack";
         tailf:info "Service to stand up scalable FTDv using NFVO Service Pack";

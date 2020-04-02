@@ -24,6 +24,8 @@ ftd_api_port = 443
 
 class ScalableService(Service):
 
+    managed = False
+    
     @Service.create
     def cb_create(self, tctx, root, service, proplist):
         self.log.info('')
@@ -32,10 +34,10 @@ class ScalableService(Service):
         site = service._parent._parent
         vnf_catalog = root.vnf_manager.vnf_catalog[service.catalog_vnf]
         vnf_deployment_name = service.tenant+'-'+service.deployment_name
+        nfvo_vnfd = root.nfvo.vnfd[vnf_catalog.descriptor_name]
         vnf_authgroup = vnf_catalog.authgroup
-        managed = False
         if service.manager is not None:
-            managed = True
+            self.managed = True
         try:
             vnf_day0_authgroup = root.devices.authgroups.group[day0_authgroup]
             vnf_day0_username = vnf_day0_authgroup.default_map.remote_name
@@ -150,7 +152,7 @@ class ScalableService(Service):
                     vars.add('IMAGE-NAME', root.nfvo.vnfd[vnf_catalog.descriptor_name]
                                             .vdu[vnf_catalog.descriptor_vdu]
                                             .software_image_descriptor.image);
-                    if managed:
+                    if self.managed:
                         vars.add('MANAGER-IP-ADDRESS', root.devices.device[service.manager].address);
                     # Set the context of the template to /vnf-manager
                     template = ncs.template.Template(service._parent._parent._parent._parent)
@@ -256,9 +258,17 @@ class ScalableService(Service):
                                      .descriptor_vdu].vm_instance[nfvo_device.vmid]
                         # If the NFVO deployment is 'ready' the device's IP address assigned by ESC
                         #  from the pool will be available
-                        service_device.management_ip_address = esc_device.interfaces.interface['1'].ip_address
-                        service_device.inside_ip_address = esc_device.interfaces.interface['3'].ip_address
-                        service_device.outside_ip_address = esc_device.interfaces.interface['4'].ip_address
+                        for network in service.scaling.networks.network:
+                            interface_id = nfvo_vnfd.vdu[vnf_catalog.descriptor_vdu] \
+                                            .internal_connection_point_descriptor[network.name] \
+                                            .interface_id
+                            external_conn_point = nfvo_vnfd.vdu[vnf_catalog.descriptor_vdu] \
+                                            .internal_connection_point_descriptor[network.name] \
+                                            .external_connection_point_descriptor
+                            device_network = service_device.networks.network.create(network.name)
+                            device_network.ip_address = esc_device.interfaces.interface[interface_id].ip_address
+                            if nfvo_vnfd.external_connection_point_descriptor[external_conn_point].management:
+                                device_network.management = 'true'
                         service_device.status = 'Starting'
                     # Reset all persistant device service data so that we are sure to register all
                     #  provisioned and and not yet provisioned devices every re-deploy run
@@ -283,10 +293,12 @@ class ScalableService(Service):
             od = collections.OrderedDict(sorted(proplistdict.items()))
             for k, v in od.iteritems(): self.log.info(k, ' ', v)
             for device in service.device:
-                self.log.info(device.name, ': ', device.management_ip_address)
+                for network in device.networks.network:
+                    if network.management == 'true':
+                        self.log.info(device.name, ': ', device.management_ip_address)
             self.log.info('==============================================')
 
-            if nfvo_deployment_status == 'deployed':
+            if nfvo_deployment_status in ('deployed', 'recovering'):
                 # Service VNFs are deployed or cloned or copied but have not completed booting and are 
                 #  not ready
                 self.log.info('VNFs\' APIs are NOT not available - wait for NFVO to report back')
@@ -301,8 +313,8 @@ class ScalableService(Service):
                 self.log.info('Error: ' + nfvo_deployment_status.error)
                 raise Exception('Error: ' + nfvo_deployment_status.error)
                 return
-            elif nfvo_deployment_status == 'recovering':
-                raise Exception('VNF Recovering - This is not supported')
+            #elif nfvo_deployment_status == 'recovering':
+            #    raise Exception('VNF Recovering - This is not supported')
             elif nfvo_deployment_status == 'error':
                 if nfvo_deployment_status == 'error':
                     self.addPlanFailure(planinfo, 'service', 'vnfs-deployed')
@@ -316,8 +328,33 @@ class ScalableService(Service):
             # Register devices with Manager
             failure = False
             all_vnfs_registered = True
+            planinfo['vnfs-registered-with-manager'] = 'NOT COMPLETED'
+            if self.managed and nfvo_deployment_status == 'deployed':
+                for device in service.device:
+                    try:
+                        self.log.info('Registering device with manager: ', device.name)
+                        vars = ncs.template.Variables()
+                        vars.add('TENANT-NAME', service.tenant);
+                        vars.add('DEPLOYMENT-NAME', service.deployment_name);
+                        vars.add('DEVICE-NAME', device.name);
+                        # Set the context of the template to the site
+                        template = ncs.template.Template(site);
+                        template.apply('fmc-ftdv-device', vars)
+                        planinfo_devices[device.name]['registered-with-manager'] = 'COMPLETED'
+                    except Exception as e:
+                        self.log.error(e)
+                        failure = True
+                        service.status_message = e
+                        self.addPlanFailure(planinfo, device.name, 'registered-with-manager')
+                        self.addPlanFailure(planinfo, 'service', 'vnfs-registered-with-manager')
+                if not failure and all_vnfs_registered:
+                    planinfo['vnfs-registered-with-manager'] = 'COMPLETED'
+
+            # Mark Devices Provisioned when managed
+            failure = False
+            all_vnfs_managed = True
             for device in service.device:
-                planinfo_devices[device.name]['registered-with-manager'] = 'COMPLETED'
+                proplistdict['ProvisionedVMCount'] = str(int(proplistdict['ProvisionedVMCount']) + 1)
 
             # Register devices with NSO
             failure = False
@@ -325,7 +362,9 @@ class ScalableService(Service):
             for device in service.device:
                 try:
                     # Device is registered by kicker call action
-                    if device.name in root.devices.device and not managed:
+                    if self.managed:
+                        pass
+                    elif device.name in root.devices.device:
                         self.log.info('Device Registered: '+device.name)
                         device.status = 'Registered'
                         planinfo_devices[device.name]['registered-with-nso'] = 'COMPLETED'
@@ -349,30 +388,29 @@ class ScalableService(Service):
             all_vnfs_provisioned = True
             for device in service.device:
                 try:
-                    if proplistdict[str('DEVICE: '+device.name)] in ('Provisioned', 'Configurable') and not managed:
+                    if self.managed:
+                        pass
+                    elif proplistdict[str('DEVICE: '+device.name)] in ('Provisioned', 'Configurable'):
                         planinfo_devices[device.name]['initialized'] = 'COMPLETED'
                         proplistdict[str('DEVICE: '+device.name)] = 'Provisioned'
                         device.status = 'Provisioned'
                         dev = root.devices.device[device.name]
                         dev.authgroup = vnf_day1_authgroup.name
                         self.log.info('Device Provisioned: '+device.name)
-                    elif proplistdict[str('DEVICE: '+device.name)] == 'Registered' and not managed:
+                    elif proplistdict[str('DEVICE: '+device.name)] == 'Registered':
                         self.log.info('Provisioning Device: '+device.name)
                         device.status = 'Provisioning'
-                        if managed:
-                            pass
-                        else:
-                            dev = root.devices.device[device.name]
-                            input = dev.config.cisco_ftd__ftd.actions.provision.get_input()
-                            input.acceptEULA = True
-                            input.currentPassword = vnf_day0_password
-                            input.newPassword = vnf_day1_password
-                            output = dev.config.cisco_ftd__ftd.actions.provision(input)
-                            dev.authgroup = vnf_day1_authgroup.name
-                            planinfo_devices[device.name]['initialized'] = 'COMPLETED'
-                            proplistdict[str('DEVICE: '+device.name)] = 'Provisioned'
-                            device.status = 'Provisioned'
-                            self.log.info('Device Provisioned: '+device.name)
+                        dev = root.devices.device[device.name]
+                        input = dev.config.cisco_ftd__ftd.actions.provision.get_input()
+                        input.acceptEULA = True
+                        input.currentPassword = vnf_day0_password
+                        input.newPassword = vnf_day1_password
+                        output = dev.config.cisco_ftd__ftd.actions.provision(input)
+                        dev.authgroup = vnf_day1_authgroup.name
+                        planinfo_devices[device.name]['initialized'] = 'COMPLETED'
+                        proplistdict[str('DEVICE: '+device.name)] = 'Provisioned'
+                        device.status = 'Provisioned'
+                        self.log.info('Device Provisioned: '+device.name)
                     else:
                         all_vnfs_provisioned = False
                         self.log.info('Device NOT Provisioned (Device not registered): '+device.name)
@@ -390,37 +428,41 @@ class ScalableService(Service):
             planinfo['vnfs-synchronized-with-nso'] = 'NOT COMPLETED'
             for device in service.device:
                 try:
-                    with ncs.maapi.single_read_trans(tctx.uinfo.username, 'itd',
-                                                     db=ncs.RUNNING) as trans:
-                        run_root = ncs.maagic.get_root(trans)
-                        try:
-                            # NED does not support check-syc
-                            # if run_root.devices.device[device.name].check_sync() == 'in-sync':
-                            planinfo_devices[device.name]['synchronized-with-nso'] = 'NOT COMPLETED'
-                            planinfo_devices[device.name]['configurable'] = 'NOT COMPLETED'
-                            if run_root.devices.device[device.name].config.ftd.license.smartagentconnections.connectionType is not None \
-                             and is not managed:
-                                self.log.info('Device Synced: ', device.name)
-                                planinfo_devices[device.name]['synchronized-with-nso'] = 'COMPLETED'
-                                planinfo_devices[device.name]['configurable'] = 'COMPLETED'
-                                proplistdict[str('DEVICE: '+device.name)] = 'Configurable'
-                                device.status = 'Configurable'
-                                proplistdict['ProvisionedVMCount'] = str(int(proplistdict['ProvisionedVMCount']) + 1)
-                            else:
-                                self.log.info('Device NOT synced: ', device.name)
+                    if self.managed:
+                        pass
+                    else:
+                        with ncs.maapi.single_read_trans(tctx.uinfo.username, 'itd',
+                                                         db=ncs.RUNNING) as trans:
+                            run_root = ncs.maagic.get_root(trans)
+                            try:
+                                # NED does not support check-syc
+                                # if run_root.devices.device[device.name].check_sync() == 'in-sync':
+                                planinfo_devices[device.name]['synchronized-with-nso'] = 'NOT COMPLETED'
+                                planinfo_devices[device.name]['configurable'] = 'NOT COMPLETED'
+                                if run_root.devices.device[device.name].config.ftd.license.smartagentconnections.connectionType \
+                                 is not None: 
+                                    self.log.info('Device Synced: ', device.name)
+                                    planinfo_devices[device.name]['synchronized-with-nso'] = 'COMPLETED'
+                                    planinfo_devices[device.name]['configurable'] = 'COMPLETED'
+                                    proplistdict[str('DEVICE: '+device.name)] = 'Configurable'
+                                    device.status = 'Configurable'
+                                    proplistdict['ProvisionedVMCount'] = str(int(proplistdict['ProvisionedVMCount']) + 1)
+                                else:
+                                    self.log.info('Device NOT synced: ', device.name)
+                                    all_vnfs_synced = False
+                            except KeyError as error:
+                                self.log.info('Device NOT synced (Device not registered): ', device.name)
                                 all_vnfs_synced = False
-                        except KeyError as error:
-                            self.log.info('Device NOT synced (Device not registered): ', device.name)
-                            all_vnfs_synced = False
                 except Exception as e:
                     self.log.error(e)
                     self.log.error(traceback.format_exc())
                     failure = True
                     self.addPlanFailure(planinfo, device.name, 'synchronized-with-nso')
                     self.addPlanFailure(planinfo, 'service', 'vnfs-synchronized-with-nso')
-            if new_vm_count is not None and new_vm_count !=0 and not failure and all_vnfs_synced:
+            if not self.managed and new_vm_count is not None and new_vm_count !=0 and not failure and all_vnfs_synced:
                 planinfo['vnfs-synchronized-with-nso'] = 'COMPLETED'
-
+            
+            planinfo['load-balancing-configured'] = 'NOT COMPLETED'
             if planinfo['load-balancing-configured'] == 'INITIALIZED' and \
                planinfo['vnfs-synchronized-with-nso'] == 'COMPLETED':
                 for loadbalancer in service.scaling.load_balance:
@@ -448,7 +490,7 @@ class ScalableService(Service):
             if proplistdict.get('Monitored', 'False') == 'True' or int(proplistdict.get('ProvisionedVMCount', 0)) > 0:
                 # Turn monitoring back on
                 vars = ncs.template.Variables()
-                vars.add('SITE-NAME', service._parent._parent.name);
+                vars.add('SITE-NAME', site.name);
                 vars.add('DEPLOYMENT-TENANT', service.tenant);
                 vars.add('DEPLOYMENT-NAME', service.deployment_name);
                 vars.add('DEPLOY-PASSWORD', vnf_day0_password); # admin password to set when deploy
@@ -457,7 +499,7 @@ class ScalableService(Service):
                 vars.add('MONITOR-PASSWORD', vnf_day1_password);
                 vars.add('IMAGE-NAME', root.nfvo.vnfd[vnf_catalog.descriptor_name].vdu[
                                         vnf_catalog.descriptor_vdu].software_image_descriptor.image);
-                if managed:
+                if self.managed:
                     vars.add('MANAGER-IP-ADDRESS', root.devices.device[service.manager].address);
                 # Set the context of the template to /vnf-manager
                 template = ncs.template.Template(service._parent._parent._parent._parent)
@@ -465,7 +507,7 @@ class ScalableService(Service):
                 proplistdict['Monitored'] = 'True'
                 planinfo['scaling-monitoring-enabled'] = 'COMPLETED'
                 self.log.info('VNF load monitoring Enabled')
-            if not managed:
+            if not self.managed:
                 for device in service.device:
                     if planinfo_devices[device.name]['registered-with-nso'] != 'COMPLETED':
                         # Apply kicker to do device registration, this should be applied after status of nfvo changes to deploying
@@ -503,12 +545,12 @@ class ScalableService(Service):
             return proplist
 
     def service_status_good(self, planinfo):
-        self.log.info('Checking service status with: '+str(planinfo))
+        self.log.debug('Checking service status with: '+str(planinfo))
         if len(planinfo['failure']) == 0:
-            self.log.info('Service Status GOOD: ', len(planinfo['failure']))
+            self.log.debug('Service Status GOOD: ', len(planinfo['failure']))
             return True
         else:
-            self.log.info('Service Status BAD: ', len(planinfo['failure']))
+            self.log.debug('Service Status BAD: ', len(planinfo['failure']))
             return False
 
     def addPlanFailure(self, planinfo, component, step):
@@ -521,10 +563,10 @@ class ScalableService(Service):
         self_plan = PlanComponent(service, 'vnf-deployment_'+service.deployment_name, 'ncs:self')
         self_plan.append_state('ncs:init')
         self_plan.append_state('ftdv-ngfw:ip-addressing')
-        if managed:
-            self_plan.append_state('ftdv-ngfw:vnfs-registered-with-manager')
         self_plan.append_state('ftdv-ngfw:vnfs-deployed')
-        if not managed:
+        if self.managed:
+            self_plan.append_state('ftdv-ngfw:vnfs-registered-with-manager')
+        if not self.managed:
             self_plan.append_state('ftdv-ngfw:vnfs-api-available')
             self_plan.append_state('ftdv-ngfw:vnfs-registered-with-nso')
             self_plan.append_state('ftdv-ngfw:vnfs-initialized')
@@ -544,20 +586,16 @@ class ScalableService(Service):
         service.status = 'Initializing'
         if planinfo.get('ip-addressing', '') == 'COMPLETED':
             self_plan.set_reached('ftdv-ngfw:ip-addressing')
-            if managed:
-                service.status = 'Management-Registration'
-            else:
-                service.status = 'Deploying'
-        if managed:
-            if planinfo.get('vnfs-registered-with-manager', '') == 'COMPLETED':
-                self_plan.set_reached('ftdv-ngfw:vnfs-registered-with-manager')
-                service.status = 'Deploying'
+            service.status = 'Deploying'
         if planinfo.get('vnfs-deployed', '') == 'COMPLETED':
             self_plan.set_reached('ftdv-ngfw:vnfs-deployed')
             service.status = 'Starting VNFs'
+        if self.managed:
+            if planinfo.get('vnfs-registered-with-manager', '') == 'COMPLETED':
+                self_plan.set_reached('ftdv-ngfw:vnfs-registered-with-manager')
         if planinfo.get('load-balancing-configured', '') == 'COMPLETED':
             self_plan.set_reached('ftdv-ngfw:load-balancing-configured')
-        if not managed:
+        if not self.managed:
             if planinfo.get('vnfs-api-available', '') == 'COMPLETED':
                 self_plan.set_reached('ftdv-ngfw:vnfs-api-available')
                 service.status = 'Provisioning'
@@ -585,10 +623,10 @@ class ScalableService(Service):
             device_states = planinfo['devices'][device]
             device_plan = PlanComponent(service, device, 'ftdv-ngfw:vnf')
             device_plan.append_state('ncs:init')
-            if managed:
+            if self.managed:
                 device_plan.append_state('ftdv-ngfw:registered-with-manager')
             device_plan.append_state('ftdv-ngfw:deployed')
-            if not managed:
+            if not self.managed:
                 device_plan.append_state('ftdv-ngfw:registered-with-nso')
                 device_plan.append_state('ftdv-ngfw:api-available')
                 device_plan.append_state('ftdv-ngfw:initialized')
@@ -598,13 +636,13 @@ class ScalableService(Service):
             device_plan.set_reached('ncs:init')
 
             service.device[device].status = 'Deploying'
-            if managed:
+            if self.managed:
                 if device_states.get('registered-with-manager', '') == 'COMPLETED':
                     device_plan.set_reached('ftdv-ngfw:registered-with-manager')
             if device_states.get('deployed', '') == 'COMPLETED':
                 device_plan.set_reached('ftdv-ngfw:deployed')
                 service.device[device].status= 'Starting'
-            if not managed:
+            if not self.managed:
                 if device_states.get('registered-with-nso', '') == 'COMPLETED':
                     device_plan.set_reached('ftdv-ngfw:registered-with-nso')
                 if device_states.get('api-available', '') == 'COMPLETED':

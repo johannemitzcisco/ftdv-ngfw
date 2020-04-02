@@ -30,6 +30,9 @@ module ftdv-ngfw {
   identity vnfs-deployed {
     base ncs:plan-state;
   }
+  identity vnfs-registered-with-manager {
+    base ncs:plan-state;
+  }
   identity vnfs-api-available {
     base ncs:plan-state;
   }
@@ -54,6 +57,9 @@ module ftdv-ngfw {
 
   identity vnf {
     base ncs:plan-component-type;
+  }
+  identity registered-with-manager {
+    base ncs:plan-state;
   }
   identity deployed {
     base ncs:plan-state;
@@ -221,6 +227,11 @@ module ftdv-ngfw {
         path "/ftdv-ngfw:vnf-manager/ftdv-ngfw:vnf-catalog/ftdv-ngfw:name";
       }
     }
+    leaf manager {
+      type leafref {
+        path "../../managers/manager/name";
+      }
+    }
     container scaling {
       tailf:info "Scaling attributes for the VNF";
       container threshold {
@@ -280,6 +291,7 @@ module ftdv-ngfw {
       type enumeration {
         enum "Unknown";
         enum "Initializing";
+        enum "Management-Registration";
         enum "Deploying";
         enum "Starting VNFs";
         enum "Provisioning";
@@ -308,20 +320,27 @@ module ftdv-ngfw {
       leaf vmid {
         type string;
       }
-      leaf management-ip-address {
-        type string;
-      }
-      leaf inside-ip-address {
-        type string;
-      }
-      leaf outside-ip-address {
-        type string;
+      container networks {
+        list network {
+          key name;
+          leaf name {
+            type string;
+          }
+          leaf ip-address {
+            type inet:ipv4-address;
+          }
+          leaf management {
+            type boolean;
+            default "false";
+          }
+        }
       }
       leaf status {
         tailf:info "Status of the Deployment";
         config "false";
         type enumeration {
           enum "Unknown";
+          enum "Management-Registration";
           enum "Deploying";
           enum "Starting";
           enum "Initializing";

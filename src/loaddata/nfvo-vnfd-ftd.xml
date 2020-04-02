@@ -147,12 +147,10 @@
     <external-connection-point-descriptor>
       <id>Inside</id>
       <layer-protocol>Ethernet</layer-protocol>
-      <management xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc"/>
     </external-connection-point-descriptor>
     <external-connection-point-descriptor>
       <id>Outside</id>
       <layer-protocol>Ethernet</layer-protocol>
-      <management xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc"/>
     </external-connection-point-descriptor>
     <deployment-flavor>
       <id>Small</id>

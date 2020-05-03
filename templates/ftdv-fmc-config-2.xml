@@ -1,0 +1,43 @@
+<config xmlns="http://tail-f.com/ns/config/1.0">
+<?save-context SITE?>
+<?set-context-node {vnf-deployment[tenant=$TENANT-NAME][deployment-name=$DEPLOYMENT-NAME]}?>
+<?save-context SERVICE?>
+<?set SERVICE-NAME={name}?>
+<?set-context-node {device[name=$DEVICE-NAME]}?>
+<?save-context DEVICE?>
+<?set VM_NAME={vm-name}?>
+
+<?switch-context SERVICE?>
+  <devices xmlns="http://tail-f.com/ns/ncs">
+  <device>
+    <name>{string(manager/name)}</name>
+      <config>
+      <devices xmlns="http://tail-f.com/ned/cisco-fmc">
+<?foreach {scaling/networks/network[ftd-route-network]}?>
+<?set INTERFACE-NAME={name}?>
+      <devicerecords>
+        <name>{$VM_NAME}</name>
+        <routing>
+<?foreach {ftd-route-network}?>
+          <ipv4staticroutes>
+            <interfaceName>{$INTERFACE-NAME}</interfaceName>
+            <selectedNetworks>
+              <name>{$TENANT-NAME}-{$DEPLOYMENT-NAME}-{.}</name>
+            </selectedNetworks>
+            <gateway>
+              <object>
+                <name>{$TENANT-NAME}-{$DEPLOYMENT-NAME}-{.}_GW</name>
+              </object>
+            </gateway>
+            <metricValue>1</metricValue>
+            <isTunneled>false</isTunneled>
+          </ipv4staticroutes>
+<?end?>
+        </routing>
+      </devicerecords>
+<?end?>
+      </devices>
+      </config>
+  </device>
+  </devices>
+</config>

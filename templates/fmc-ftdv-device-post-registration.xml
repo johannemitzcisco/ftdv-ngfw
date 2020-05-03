@@ -1,0 +1,28 @@
+<config xmlns="http://tail-f.com/ns/config/1.0">
+
+<?save-context SITE?>
+<?set-context-node {vnf-deployment[tenant=$TENANT-NAME][deployment-name=$DEPLOYMENT-NAME]}?>
+<?save-context SERVICE?>
+<?set-context-node {device[name=$DEVICE-NAME]}?>
+<?save-context DEVICE?>
+
+<?switch-context SERVICE?>
+  <devices xmlns="http://tail-f.com/ns/ncs">
+  <device>
+    <name>{manager/name}</name>
+      <config>
+      <devices xmlns="http://tail-f.com/ned/cisco-fmc">
+<?switch-context DEVICE?>
+      <devicerecords>
+        <name>{vm-name}</name>
+        <hostName>{networks/network[name='Management']/ip-address</hostName>
+        <license_caps>BASE</license_caps>
+        <license_caps>MALWARE</license_caps>
+        <license_caps>THREAT</license_caps>
+        <license_caps>URLFilter</license_caps>
+      </devicerecords>
+      </devices>
+      </config>
+  </device>
+  </devices>
+</config>

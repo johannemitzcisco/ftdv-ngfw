@@ -1,5 +1,25 @@
 <metrics xmlns:ns2="urn:ietf:params:xml:ns:netconf:base:1.0">
     <metric>
+        <name>FTD_LOGIN_PING</name>
+        <type>MONITOR_SUCCESS_FAILURE</type>
+        <userLabel>Check FTD SSH Login Available</userLabel>
+        <metaData>
+            <type>custom_script</type>
+            <properties>
+                <property>
+                    <hidden>false</hidden>
+                    <name>vm_ip_address</name>
+                    <value></value>
+                </property>
+                <property>
+                    <hidden>false</hidden>
+                    <name>script_filename</name>
+                    <value>/opt/cisco/esc/esc-scripts/ftdlogincheck.py</value>
+                </property>
+            </properties>
+        </metaData>
+    </metric>
+    <metric>
         <name>FTD_API_PING</name>
         <type>MONITOR_SUCCESS_FAILURE</type>
         <userLabel>Check FTD REST API Available</userLabel>

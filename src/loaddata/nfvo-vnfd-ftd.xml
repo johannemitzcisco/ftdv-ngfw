@@ -1,180 +1,365 @@
 <config xmlns="http://tail-f.com/ns/config/1.0">
-  <nfvo xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo">
+  <nfv xmlns="urn:etsi:nfv:yang:etsi-nfv-descriptors">
   <vnfd>
     <id>Cisco-FTD</id>
-    <product-name>Virtual NGFW</product-name>
-    <version>6.5</version>
+    <provider>Cicso</provider>
+    <product-name>Firepower Threat Defence</product-name>
+    <software-version>6.5.0</software-version>
+    <version>6.5.0-115</version>
     <product-info-description>Virtual Next Generation Firewall</product-info-description>
+    <vnfm-info>Cisco Elastic Service Controller</vnfm-info>
     <vdu>
-      <id>Small</id>
-      <internal-connection-point-descriptor>
-        <id>Management</id>
-        <external-connection-point-descriptor>Management</external-connection-point-descriptor>
-        <layer-protocol>Ethernet</layer-protocol>
-        <interface-id xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">1</interface-id>
-      </internal-connection-point-descriptor>
-      <internal-connection-point-descriptor>
+      <id>Large</id>
+      <name>Large</name>
+      <int-cpd>
         <id>Inside</id>
-        <external-connection-point-descriptor>Inside</external-connection-point-descriptor>
-        <layer-protocol>Ethernet</layer-protocol>
-        <interface-id xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">3</interface-id>
-      </internal-connection-point-descriptor>
-      <internal-connection-point-descriptor>
+        <int-virtual-link-desc>Inside</int-virtual-link-desc>
+        <layer-protocol>ipv4</layer-protocol>
+        <interface-id xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">3</interface-id>
+      </int-cpd>
+      <int-cpd>
+        <id>Management</id>
+        <int-virtual-link-desc>Management</int-virtual-link-desc>
+        <layer-protocol>ipv4</layer-protocol>
+        <interface-id xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">1</interface-id>
+        <management xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo"/>
+      </int-cpd>
+      <int-cpd>
         <id>Outside</id>
-        <external-connection-point-descriptor>Outside</external-connection-point-descriptor>
-        <layer-protocol>Ethernet</layer-protocol>
-        <interface-id xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">4</interface-id>
-      </internal-connection-point-descriptor>
-      <virtual-compute-descriptor>Small</virtual-compute-descriptor>
-      <virtual-storage-descriptor>root</virtual-storage-descriptor>
-      <software-image-descriptor>
-        <name>FTDv-6_5_0</name>
-        <container-format>ovf</container-format>
-        <disk-format>vmdk</disk-format>
-        <image>FTDv-6.5.0-115-Template</image>
-      </software-image-descriptor>
-      <device-type xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">
-        <generic>
-          <ned-id>cisco-ftd</ned-id>
-        </generic>
-      </device-type>
+        <int-virtual-link-desc>Outside</int-virtual-link-desc>
+        <layer-protocol>ipv4</layer-protocol>
+        <interface-id xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">4</interface-id>
+      </int-cpd>
+      <virtual-compute-desc>Large</virtual-compute-desc>
+      <virtual-storage-desc>root</virtual-storage-desc>
+      <sw-image-desc>FTDv-6_5_0-Large</sw-image-desc>
     </vdu>
     <vdu>
       <id>Medium</id>
-      <internal-connection-point-descriptor>
-        <id>Management</id>
-        <external-connection-point-descriptor>Management</external-connection-point-descriptor>
-        <layer-protocol>Ethernet</layer-protocol>
-        <interface-id xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">1</interface-id>
-      </internal-connection-point-descriptor>
-      <internal-connection-point-descriptor>
+      <name>Medium</name>
+      <int-cpd>
         <id>Inside</id>
-        <external-connection-point-descriptor>Inside</external-connection-point-descriptor>
-        <layer-protocol>Ethernet</layer-protocol>
-        <interface-id xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">3</interface-id>
-      </internal-connection-point-descriptor>
-      <internal-connection-point-descriptor>
+        <int-virtual-link-desc>Inside</int-virtual-link-desc>
+        <layer-protocol>ipv4</layer-protocol>
+        <interface-id xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">3</interface-id>
+      </int-cpd>
+      <int-cpd>
+        <id>Management</id>
+        <int-virtual-link-desc>Management</int-virtual-link-desc>
+        <layer-protocol>ipv4</layer-protocol>
+        <interface-id xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">1</interface-id>
+        <management xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo"/>
+      </int-cpd>
+      <int-cpd>
         <id>Outside</id>
-        <external-connection-point-descriptor>Outside</external-connection-point-descriptor>
-        <layer-protocol>Ethernet</layer-protocol>
-        <interface-id xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">4</interface-id>
-      </internal-connection-point-descriptor>
-      <virtual-compute-descriptor>Medium</virtual-compute-descriptor>
-      <virtual-storage-descriptor>root</virtual-storage-descriptor>
-      <software-image-descriptor>
-        <name>FTDv-6_5_0</name>
-        <container-format>ovf</container-format>
-        <disk-format>vmdk</disk-format>
-        <image>FTDv-6.5.0-115-Template</image>
-      </software-image-descriptor>
-      <device-type xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">
-        <generic>
-          <ned-id>cisco-ftd</ned-id>
-        </generic>
-      </device-type>
+        <int-virtual-link-desc>Outside</int-virtual-link-desc>
+        <layer-protocol>ipv4</layer-protocol>
+        <interface-id xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">4</interface-id>
+      </int-cpd>
+      <virtual-compute-desc>Medium</virtual-compute-desc>
+      <virtual-storage-desc>root</virtual-storage-desc>
+      <sw-image-desc>FTDv-6_5_0-Medium</sw-image-desc>
     </vdu>
     <vdu>
-      <id>Large</id>
-      <internal-connection-point-descriptor>
-        <id>Management</id>
-        <external-connection-point-descriptor>Management</external-connection-point-descriptor>
-        <layer-protocol>Ethernet</layer-protocol>
-        <interface-id xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">1</interface-id>
-      </internal-connection-point-descriptor>
-      <internal-connection-point-descriptor>
-        <id>Inside</id>
-        <external-connection-point-descriptor>Inside</external-connection-point-descriptor>
-        <layer-protocol>Ethernet</layer-protocol>
-        <interface-id xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">3</interface-id>
-      </internal-connection-point-descriptor>
-      <internal-connection-point-descriptor>
-        <id>Outside</id>
-        <external-connection-point-descriptor>Outside</external-connection-point-descriptor>
-        <layer-protocol>Ethernet</layer-protocol>
-        <interface-id xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">4</interface-id>
-      </internal-connection-point-descriptor>
-      <virtual-compute-descriptor>Large</virtual-compute-descriptor>
-      <virtual-storage-descriptor>root</virtual-storage-descriptor>
-      <software-image-descriptor>
-        <name>FTDv-6_5_0</name>
-        <container-format>ovf</container-format>
-        <disk-format>vmdk</disk-format>
-        <image>FTDv-6.5.0-115-Template</image>
-      </software-image-descriptor>
-      <device-type xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc">
-        <generic>
-          <ned-id>cisco-ftd</ned-id>
-        </generic>
-      </device-type>
-    </vdu>
-    <virtual-compute-descriptor>
       <id>Small</id>
+      <name>Small</name>
+      <int-cpd>
+        <id>Inside</id>
+        <int-virtual-link-desc>Inside</int-virtual-link-desc>
+        <layer-protocol>ipv4</layer-protocol>
+        <interface-id xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">3</interface-id>
+      </int-cpd>
+      <int-cpd>
+        <id>Management</id>
+        <int-virtual-link-desc>Management</int-virtual-link-desc>
+        <layer-protocol>ipv4</layer-protocol>
+        <interface-id xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">1</interface-id>
+        <management xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo"/>
+      </int-cpd>
+      <int-cpd>
+        <id>Outside</id>
+        <int-virtual-link-desc>Outside</int-virtual-link-desc>
+        <layer-protocol>ipv4</layer-protocol>
+        <interface-id xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">4</interface-id>
+      </int-cpd>
+      <virtual-compute-desc>Small</virtual-compute-desc>
+      <virtual-storage-desc>root</virtual-storage-desc>
+      <sw-image-desc>FTDv-6_5_0-Small</sw-image-desc>
+    </vdu>
+    <vdu>
+      <id>Small-SRIOV</id>
+      <name>Small</name>
+      <int-cpd>
+        <id>Inside</id>
+        <int-virtual-link-desc>Inside</int-virtual-link-desc>
+        <layer-protocol>ipv4</layer-protocol>
+        <interface-id xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">3</interface-id>
+      </int-cpd>
+      <int-cpd>
+        <id>Management</id>
+        <int-virtual-link-desc>Management</int-virtual-link-desc>
+        <layer-protocol>ipv4</layer-protocol>
+        <interface-id xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">1</interface-id>
+        <management xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo"/>
+      </int-cpd>
+      <int-cpd>
+        <id>Outside</id>
+        <int-virtual-link-desc>Outside</int-virtual-link-desc>
+        <layer-protocol>ipv4</layer-protocol>
+        <interface-id xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">4</interface-id>
+      </int-cpd>
+      <virtual-compute-desc>Small</virtual-compute-desc>
+      <virtual-storage-desc>root</virtual-storage-desc>
+      <sw-image-desc>FTDv-6_5_0-Small-SRIOV</sw-image-desc>
+    </vdu>
+    <virtual-compute-desc>
+      <id>Large</id>
       <virtual-memory>
-        <virtual-memory-size>8.0</virtual-memory-size>
+        <size>24.0</size>
       </virtual-memory>
       <virtual-cpu>
-        <number-of-virtual-cpus>4</number-of-virtual-cpus>
+        <num-virtual-cpu>16</num-virtual-cpu>
       </virtual-cpu>
-    </virtual-compute-descriptor>
-    <virtual-compute-descriptor>
+    </virtual-compute-desc>
+    <virtual-compute-desc>
       <id>Medium</id>
       <virtual-memory>
-        <virtual-memory-size>16.0</virtual-memory-size>
+        <size>16.0</size>
       </virtual-memory>
       <virtual-cpu>
-        <number-of-virtual-cpus>8</number-of-virtual-cpus>
+        <num-virtual-cpu>8</num-virtual-cpu>
       </virtual-cpu>
-    </virtual-compute-descriptor>
-    <virtual-compute-descriptor>
-      <id>Large</id>
+    </virtual-compute-desc>
+    <virtual-compute-desc>
+      <id>Small</id>
       <virtual-memory>
-        <virtual-memory-size>24.0</virtual-memory-size>
+        <size>8.0</size>
       </virtual-memory>
       <virtual-cpu>
-        <number-of-virtual-cpus>16</number-of-virtual-cpus>
+        <num-virtual-cpu>4</num-virtual-cpu>
       </virtual-cpu>
-    </virtual-compute-descriptor>
-    <virtual-storage-descriptor>
+    </virtual-compute-desc>
+    <virtual-storage-desc>
       <id>root</id>
-      <type-of-storage>root</type-of-storage>
+      <type-of-storage>root-storage</type-of-storage>
       <size-of-storage>50</size-of-storage>
-    </virtual-storage-descriptor>
-    <external-connection-point-descriptor>
-      <id>Management</id>
-      <layer-protocol>Ethernet</layer-protocol>
-      <management xmlns="http://tail-f.com/pkg/tailf-etsi-rel2-nfvo-esc"/>
-    </external-connection-point-descriptor>
-    <external-connection-point-descriptor>
+    </virtual-storage-desc>
+    <sw-image-desc>
+      <id>FTDv-6_5_0-Large</id>
+      <name>FTDv-6_5_0</name>
+      <version>6.5.0-115</version>
+      <checksum>
+        <algorithm>sha-256</algorithm>
+        <hash>123321</hash>
+      </checksum>
+      <container-format>ovf</container-format>
+      <disk-format>vmdk</disk-format>
+      <min-disk>50</min-disk>
+      <size>50</size>
+      <image>FTDv-6.5.0-115-Large-Template</image>
+    </sw-image-desc>
+    <sw-image-desc>
+      <id>FTDv-6_5_0-Medium</id>
+      <name>FTDv-6_5_0</name>
+      <version>6.5.0-115</version>
+      <checksum>
+        <algorithm>sha-256</algorithm>
+        <hash>123321</hash>
+      </checksum>
+      <container-format>ovf</container-format>
+      <disk-format>vmdk</disk-format>
+      <min-disk>50</min-disk>
+      <size>50</size>
+      <image>FTDv-6.5.0-115-Medium-Template</image>
+    </sw-image-desc>
+    <sw-image-desc>
+      <id>FTDv-6_5_0-Small</id>
+      <name>FTDv-6_5_0</name>
+      <version>6.5.0-115</version>
+      <checksum>
+        <algorithm>sha-256</algorithm>
+        <hash>123321</hash>
+      </checksum>
+      <container-format>ovf</container-format>
+      <disk-format>vmdk</disk-format>
+      <min-disk>50</min-disk>
+      <size>50</size>
+      <image>FTDv-6.5.0-115-Small-Template</image>
+    </sw-image-desc>
+    <sw-image-desc>
+      <id>FTDv-6_5_0-Small-SRIOV</id>
+      <name>FTDv-6_5_0</name>
+      <version>6.5.0-115</version>
+      <checksum>
+        <algorithm>sha-256</algorithm>
+        <hash>123321</hash>
+      </checksum>
+      <container-format>ovf</container-format>
+      <disk-format>vmdk</disk-format>
+      <min-disk>50</min-disk>
+      <size>50</size>
+      <image>FTDv-6.5.0-115-Small-Template</image>
+    </sw-image-desc>
+    <int-virtual-link-desc>
       <id>Inside</id>
-      <layer-protocol>Ethernet</layer-protocol>
-    </external-connection-point-descriptor>
-    <external-connection-point-descriptor>
+      <connectivity-type>
+        <layer-protocol>ipv4</layer-protocol>
+      </connectivity-type>
+    </int-virtual-link-desc>
+    <int-virtual-link-desc>
+      <id>Management</id>
+      <connectivity-type>
+        <layer-protocol>ipv4</layer-protocol>
+      </connectivity-type>
+    </int-virtual-link-desc>
+    <int-virtual-link-desc>
       <id>Outside</id>
-      <layer-protocol>Ethernet</layer-protocol>
-    </external-connection-point-descriptor>
-    <deployment-flavor>
-      <id>Small</id>
+      <connectivity-type>
+        <layer-protocol>ipv4</layer-protocol>
+      </connectivity-type>
+    </int-virtual-link-desc>
+    <ext-cpd>
+      <id>Inside</id>
+      <int-virtual-link-desc>Inside</int-virtual-link-desc>
+    </ext-cpd>
+    <ext-cpd>
+      <id>Management</id>
+      <int-virtual-link-desc>Management</int-virtual-link-desc>
+    </ext-cpd>
+    <ext-cpd>
+      <id>Outside</id>
+      <int-virtual-link-desc>Outside</int-virtual-link-desc>
+    </ext-cpd>
+    <df>
+      <id>Standard</id>
       <vdu-profile>
-        <vdu>Small</vdu>
+        <id>Large</id>
+        <min-number-of-instances>1</min-number-of-instances>
+        <max-number-of-instances>2</max-number-of-instances>
+      </vdu-profile>
+      <vdu-profile>
+        <id>Medium</id>
+        <min-number-of-instances>1</min-number-of-instances>
+        <max-number-of-instances>2</max-number-of-instances>
+      </vdu-profile>
+      <vdu-profile>
+        <id>Small</id>
+        <min-number-of-instances>1</min-number-of-instances>
+        <max-number-of-instances>2</max-number-of-instances>
+      </vdu-profile>
+      <vdu-profile>
+        <id>Small-SRIOV</id>
         <min-number-of-instances>1</min-number-of-instances>
         <max-number-of-instances>2</max-number-of-instances>
       </vdu-profile>
       <instantiation-level>
-        <id>Scalable</id>
+        <id>LargeVNF-FullDeployment</id>
         <vdu-level>
-          <vdu>Small</vdu>
+          <vdu-id>Large</vdu-id>
+          <number-of-instances>2</number-of-instances>
+        </vdu-level>
+      </instantiation-level>
+      <instantiation-level>
+        <id>LargeVNF-MediumDeployment</id>
+        <vdu-level>
+          <vdu-id>Large</vdu-id>
+          <number-of-instances>2</number-of-instances>
+        </vdu-level>
+      </instantiation-level>
+      <instantiation-level>
+        <id>LargeVNF-SmallDeployment</id>
+        <vdu-level>
+          <vdu-id>Large</vdu-id>
           <number-of-instances>1</number-of-instances>
         </vdu-level>
       </instantiation-level>
       <instantiation-level>
-        <id>FullDeployment</id>
+        <id>LargeVNF-TestDeployment</id>
         <vdu-level>
-          <vdu>Small</vdu>
+          <vdu-id>Large</vdu-id>
           <number-of-instances>2</number-of-instances>
         </vdu-level>
       </instantiation-level>
-      <default-instantiation-level>Scalable</default-instantiation-level>
-    </deployment-flavor>
+      <instantiation-level>
+        <id>MediumVNF-FullDeployment</id>
+        <vdu-level>
+          <vdu-id>Medium</vdu-id>
+          <number-of-instances>2</number-of-instances>
+        </vdu-level>
+      </instantiation-level>
+      <instantiation-level>
+        <id>MediumVNF-MediumDeployment</id>
+        <vdu-level>
+          <vdu-id>Medium</vdu-id>
+          <number-of-instances>2</number-of-instances>
+        </vdu-level>
+      </instantiation-level>
+      <instantiation-level>
+        <id>MediumVNF-SmallDeployment</id>
+        <vdu-level>
+          <vdu-id>Medium</vdu-id>
+          <number-of-instances>1</number-of-instances>
+        </vdu-level>
+      </instantiation-level>
+      <instantiation-level>
+        <id>MediumVNF-TestDeployment</id>
+        <vdu-level>
+          <vdu-id>Medium</vdu-id>
+          <number-of-instances>2</number-of-instances>
+        </vdu-level>
+      </instantiation-level>
+      <instantiation-level>
+        <id>SmallVNF-FullDeployment</id>
+        <vdu-level>
+          <vdu-id>Small</vdu-id>
+          <number-of-instances>2</number-of-instances>
+        </vdu-level>
+      </instantiation-level>
+      <instantiation-level>
+        <id>SmallVNF-MediumDeployment</id>
+        <vdu-level>
+          <vdu-id>Small</vdu-id>
+          <number-of-instances>2</number-of-instances>
+        </vdu-level>
+      </instantiation-level>
+      <instantiation-level>
+        <id>SmallVNF-SmallDeployment</id>
+        <vdu-level>
+          <vdu-id>Small</vdu-id>
+          <number-of-instances>1</number-of-instances>
+        </vdu-level>
+        <vdu-level>
+          <vdu-id>Small-SRIOV</vdu-id>
+          <number-of-instances>1</number-of-instances>
+        </vdu-level>
+      </instantiation-level>
+      <!-- instantiation-level>
+        <id>SmallVNF-FullDeployment-SRIOV</id>
+        <vdu-level>
+          <vdu-id>Small-SRIOV</vdu-id>
+          <number-of-instances>2</number-of-instances>
+        </vdu-level>
+      </instantiation-level>
+      <instantiation-level>
+        <id>SmallVNF-MediumDeployment-SRIOV</id>
+        <vdu-level>
+          <vdu-id>Small-SRIOV</vdu-id>
+          <number-of-instances>2</number-of-instances>
+        </vdu-level>
+      </instantiation-level>
+      <instantiation-level>
+        <id>SmallVNF-SmallDeployment-SRIOV</id>
+        <vdu-level>
+          <vdu-id>Small-SRIOV</vdu-id>
+          <number-of-instances>1</number-of-instances>
+        </vdu-level>
+      </instantiation-level -->
+      <default-instantiation-level>SmallVNF-SmallDeployment</default-instantiation-level>
+    </df>
+    <configurable-properties>
+      <is-auto-scalable-enabled>true</is-auto-scalable-enabled>
+      <is-auto-heal-enabled>true</is-auto-heal-enabled>
+    </configurable-properties>
   </vnfd>
-  </nfvo>
+  </nfv>
 </config>

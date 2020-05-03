@@ -16,6 +16,7 @@ ftdload.py script.
 * NSO NFVO package version: 3.7.0
 * ESC version: 4.3.0.121
 * Python 2.7 requests,ipaddress,netaddr package - pip install requests
+* nmap
 
 ### 1. Deploy ESC
 
@@ -44,6 +45,7 @@ sudo sed -i -e 's/\r$//' /opt/cisco/esc/esc-scripts/ftdload.py
 ```
 Next execute the following on ESC (API is only available locally)
 ```
+curl -X DELETE -u admin:Cisco123 http://127.0.0.1:8080/ESCManager/internal/dynamic_mapping/metrics/FTD_LOGIN_PING ## It is ok if this errors as it doesn't exist yets
 curl -X DELETE -u admin:Cisco123 http://127.0.0.1:8080/ESCManager/internal/dynamic_mapping/metrics/FTD_API_PING ## It is ok if this errors as it doesn't exist yets
 curl -X DELETE -u admin:Cisco123 http://127.0.0.1:8080/ESCManager/internal/dynamic_mapping/metrics/FTD_LOAD ## It is ok if this errors as it doesn't exist yets
 curl -X POST -H "Content-Type: Application/xml" -d @metrics.xml -u admin:Cisco123 http://127.0.0.1:8080/ESCManager/internal/dynamic_mapping/metrics

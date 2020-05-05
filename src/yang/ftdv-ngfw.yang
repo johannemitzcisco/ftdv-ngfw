@@ -315,6 +315,14 @@ module ftdv-ngfw {
               path "../../../../../networks/network/name";
             }
           }
+          leaf catalog-descriptor-vdu-id {
+            type leafref {
+                path "/nfv:nfv/nfv:vnfd/nfv:vdu/nfv:int-cpd/nfv:id";
+            }
+//            must "/nfv:nfv/nfv:vnfd[nfv:id=deref(../../../catalog-vnf/../descriptor-name]/nfv:vdu[nfv:id=deref(../../../catalog-vnf/../descriptor-vdu]/nfv:int-cpd/nfv:id" {
+//              tailf:dependency "/nfv:nfv/nfv:vnfd/nfv:vdu/nfv:int-cpd";
+//            }
+          }
           container resource-pool-allocation {
             uses network:network-allocation-grouping {
               refine first-address {

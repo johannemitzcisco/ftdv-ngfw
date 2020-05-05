@@ -131,7 +131,7 @@
 <?foreach {scaling/networks/network}?>
 <?set NETWORK-NAME={name}?>
       <internal-connection-point>
-        <id>{$NETWORK-NAME}</id>
+        <id>{catalog-descriptor-vdu-id}</id>
         <connection-point-address>
           <netconf-parameters>
             <address>{resource-pool-allocation/first-address}</address>

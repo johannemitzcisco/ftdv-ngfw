@@ -35,7 +35,59 @@
       <sw-image-desc>FTDv-6_5_0-Large</sw-image-desc>
     </vdu>
     <vdu>
+      <id>Large-SRIOV</id>
+      <name>Large</name>
+      <int-cpd>
+        <id>Inside</id>
+        <int-virtual-link-desc>Inside</int-virtual-link-desc>
+        <layer-protocol>ipv4</layer-protocol>
+        <interface-id xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">3</interface-id>
+      </int-cpd>
+      <int-cpd>
+        <id>Management</id>
+        <int-virtual-link-desc>Management</int-virtual-link-desc>
+        <layer-protocol>ipv4</layer-protocol>
+        <interface-id xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">1</interface-id>
+        <management xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo"/>
+      </int-cpd>
+      <int-cpd>
+        <id>Outside</id>
+        <int-virtual-link-desc>Outside</int-virtual-link-desc>
+        <layer-protocol>ipv4</layer-protocol>
+        <interface-id xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">4</interface-id>
+      </int-cpd>
+      <virtual-compute-desc>Large</virtual-compute-desc>
+      <virtual-storage-desc>root</virtual-storage-desc>
+      <sw-image-desc>FTDv-6_5_0-Large</sw-image-desc>
+    </vdu>
+    <vdu>
       <id>Medium</id>
+      <name>Medium</name>
+      <int-cpd>
+        <id>Inside</id>
+        <int-virtual-link-desc>Inside</int-virtual-link-desc>
+        <layer-protocol>ipv4</layer-protocol>
+        <interface-id xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">3</interface-id>
+      </int-cpd>
+      <int-cpd>
+        <id>Management</id>
+        <int-virtual-link-desc>Management</int-virtual-link-desc>
+        <layer-protocol>ipv4</layer-protocol>
+        <interface-id xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">1</interface-id>
+        <management xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo"/>
+      </int-cpd>
+      <int-cpd>
+        <id>Outside</id>
+        <int-virtual-link-desc>Outside</int-virtual-link-desc>
+        <layer-protocol>ipv4</layer-protocol>
+        <interface-id xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">4</interface-id>
+      </int-cpd>
+      <virtual-compute-desc>Medium</virtual-compute-desc>
+      <virtual-storage-desc>root</virtual-storage-desc>
+      <sw-image-desc>FTDv-6_5_0-Medium</sw-image-desc>
+    </vdu>
+    <vdu>
+      <id>Medium-SRIOV</id>
       <name>Medium</name>
       <int-cpd>
         <id>Inside</id>
@@ -159,6 +211,20 @@
       <image>FTDv-6.5.0-115-Large-Template</image>
     </sw-image-desc>
     <sw-image-desc>
+      <id>FTDv-6_5_0-Large-SRIOV</id>
+      <name>FTDv-6_5_0</name>
+      <version>6.5.0-115</version>
+      <checksum>
+        <algorithm>sha-256</algorithm>
+        <hash>123321</hash>
+      </checksum>
+      <container-format>ovf</container-format>
+      <disk-format>vmdk</disk-format>
+      <min-disk>50</min-disk>
+      <size>50</size>
+      <image>FTDv-6.5.0-115-Large-SRIOV-Template</image>
+    </sw-image-desc>
+    <sw-image-desc>
       <id>FTDv-6_5_0-Medium</id>
       <name>FTDv-6_5_0</name>
       <version>6.5.0-115</version>
@@ -171,6 +237,20 @@
       <min-disk>50</min-disk>
       <size>50</size>
       <image>FTDv-6.5.0-115-Medium-Template</image>
+    </sw-image-desc>
+    <sw-image-desc>
+      <id>FTDv-6_5_0-Medium-SRIOV</id>
+      <name>FTDv-6_5_0</name>
+      <version>6.5.0-115</version>
+      <checksum>
+        <algorithm>sha-256</algorithm>
+        <hash>123321</hash>
+      </checksum>
+      <container-format>ovf</container-format>
+      <disk-format>vmdk</disk-format>
+      <min-disk>50</min-disk>
+      <size>50</size>
+      <image>FTDv-6.5.0-115-Medium-SRIOV-Template</image>
     </sw-image-desc>
     <sw-image-desc>
       <id>FTDv-6_5_0-Small</id>
@@ -198,7 +278,7 @@
       <disk-format>vmdk</disk-format>
       <min-disk>50</min-disk>
       <size>50</size>
-      <image>FTDv-6.5.0-115-Small-Template</image>
+      <image>FTDv-6.5.0-115-Small-SRIOV-Template</image>
     </sw-image-desc>
     <int-virtual-link-desc>
       <id>Inside</id>
@@ -333,27 +413,6 @@
           <number-of-instances>1</number-of-instances>
         </vdu-level>
       </instantiation-level>
-      <!-- instantiation-level>
-        <id>SmallVNF-FullDeployment-SRIOV</id>
-        <vdu-level>
-          <vdu-id>Small-SRIOV</vdu-id>
-          <number-of-instances>2</number-of-instances>
-        </vdu-level>
-      </instantiation-level>
-      <instantiation-level>
-        <id>SmallVNF-MediumDeployment-SRIOV</id>
-        <vdu-level>
-          <vdu-id>Small-SRIOV</vdu-id>
-          <number-of-instances>2</number-of-instances>
-        </vdu-level>
-      </instantiation-level>
-      <instantiation-level>
-        <id>SmallVNF-SmallDeployment-SRIOV</id>
-        <vdu-level>
-          <vdu-id>Small-SRIOV</vdu-id>
-          <number-of-instances>1</number-of-instances>
-        </vdu-level>
-      </instantiation-level -->
       <default-instantiation-level>SmallVNF-SmallDeployment</default-instantiation-level>
     </df>
     <configurable-properties>

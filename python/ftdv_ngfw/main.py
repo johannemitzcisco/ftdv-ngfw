@@ -246,11 +246,11 @@ class ScalableService(Service):
                         service_device.vmid = nfv_device.id
                         for network in service.scaling.networks.network:
                             interface_id = nfv_vnfd.vdu[vnf_catalog.descriptor_vdu] \
-                                            .int_cpd[network.name].interface_id
+                                            .int_cpd[network.catalog_descriptor_vdu_id].interface_id
                             device_network = service_device.networks.network.create(network.name)
                             device_network.ip_address = nfv_device.interface[interface_id].ip_address
                             if nfv_vnfd.vdu[vnf_catalog.descriptor_vdu] \
-                                            .int_cpd[network.name].management:
+                                            .int_cpd[network.catalog_descriptor_vdu_id].management:
                                 device_network.management.create()
                         service_device.status = 'Deploying'
                     all_vnfs_deployed = True
@@ -1161,6 +1161,7 @@ class DeployManagerConfigurations(Action):
                     response = requests.get(url=URL, headers=headers, verify=False)
                     self.log.info('Response Status: ', response.status_code)
                     data = response.json()
+                    version = None
                     if response.status_code != 200:
                         raise Exception('Bad status code: {}'.format(response.status_code))
                     else:

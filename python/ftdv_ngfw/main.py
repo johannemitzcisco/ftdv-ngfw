@@ -505,7 +505,7 @@ class ScalableService(Service):
                 applied_templates_count = 0
                 stage_1_templates_applied = 0
                 stage_2_templates_applied = 0
-                if planinfo_devices[device.name]['configurable'] == 'COMPLETED':
+                if False or planinfo_devices[device.name]['configurable'] == 'COMPLETED':
                     for catalog_template in vnf_catalog.templates.template:
                         try:
                             if (self.managed and catalog_template.target.manager_type == 'device-configuration') or \

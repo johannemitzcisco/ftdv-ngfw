@@ -223,6 +223,7 @@ class ScalableService(Service):
                 #  previous re-deploy, initialize if neccessary if this is the first time the service
                 #  has been called
                 vm_count = int(proplistdict.get('ProvisionedVMCount', 0)) 
+                proplistdict['ProvisionedVMCount'] = '0'
                 new_vm_count = 0
                 if vm_devices is not None: # This will happen during the ip-addressing stage
                     new_vm_count = len(vm_devices) # This is the number of devices that NFVO reports it is aware of
@@ -248,10 +249,15 @@ class ScalableService(Service):
                             interface_id = nfv_vnfd.vdu[vnf_catalog.descriptor_vdu] \
                                             .int_cpd[network.catalog_descriptor_vdu_id].interface_id
                             device_network = service_device.networks.network.create(network.name)
-                            device_network.ip_address = nfv_device.interface[interface_id].ip_address
+                            device_network.ip_address = root.devices.device[site.elastic_services_controller] \
+                                                         .live_status.esc__esc_datamodel.opdata.tenants \
+                                                         .tenant[service.tenant].deployments[nfv_device._parent._parent._parent._parent.id] \
+                                                         .vm_group[nfv_device._parent._parent.name] \
+                                                         .vm_instance[service_device.vmid] \
+                                                         .interfaces.interface[interface_id].ip_address
                             if nfv_vnfd.vdu[vnf_catalog.descriptor_vdu] \
                                             .int_cpd[network.catalog_descriptor_vdu_id].management:
-                                device_network.management.create()
+                               device_network.management.create()
                         service_device.status = 'Deploying'
                     all_vnfs_deployed = True
                     all_vnfs_alive = True
@@ -376,7 +382,7 @@ class ScalableService(Service):
                 planinfo['vnfs-synchronized-with-manager'] = 'NOT COMPLETED'
                 for device in service.device:
                     try:
-                        with ncs.maapi.single_read_trans(tctx.uinfo.username, 'itd',
+                        with ncs.maapi.single_read_trans(tctx.uinfo.username, 'vnf-manager',
                                                      db=ncs.RUNNING) as trans:
                             run_root = ncs.maagic.get_root(trans)
                             try:
@@ -402,8 +408,8 @@ class ScalableService(Service):
                         self.log.error(traceback.format_exc())
                         self.addPlanFailure(planinfo, device.name, 'synchronized-with-manager')
                         self.addPlanFailure(planinfo, 'service', 'vnfs-synchronized-with-manager')
-                    if new_vm_count is not None and new_vm_count !=0 and not failure and all_vnfs_synced:
-                        planinfo['vnfs-synchronized-with-manager'] = 'COMPLETED'
+                if new_vm_count is not None and new_vm_count !=0 and not failure and all_vnfs_synced:
+                    planinfo['vnfs-synchronized-with-manager'] = 'COMPLETED'
             
             if not self.managed:
                 # Device should be registered by a trigger on the nfv device being deployed
@@ -551,8 +557,8 @@ class ScalableService(Service):
                     if stage_2_templates_applied == stage_2_templates or stage_2_templates == 0:
                         proplistdict[device.name+':configured-stage-2'] = 'True'
                         planinfo_devices[device.name]['configured'] = 'COMPLETED'
-                    if applied_templates_count != config_template_count:
-                        all_vnfs_configured = False
+                if applied_templates_count != config_template_count:
+                    all_vnfs_configured = False
             if not failure and all_vnfs_configured and len(service.device) > 0 \
              and (self.managed or (not self.managed and planinfo['vnfs-synchronized-with-nso'] == 'COMPLETED')):
                 planinfo['vnfs-configured'] = 'COMPLETED'
@@ -582,8 +588,8 @@ class ScalableService(Service):
                         self.log.error(e)
                         self.log.error(traceback.format_exc())
                         self.addPlanFailure(planinfo, 'service', 'vnfs-configurations-deployed')
-                    if new_vm_count is not None and new_vm_count !=0 and not failure and all_vnfs_configurations_deployed:
-                        planinfo['vnfs-configurations-deployed'] = 'COMPLETED'
+                if new_vm_count is not None and new_vm_count !=0 and not failure and all_vnfs_configurations_deployed:
+                    planinfo['vnfs-configurations-deployed'] = 'COMPLETED'
 
             if planinfo['load-balancing-configured'] == 'INITIALIZED' and \
               ((not self.managed and planinfo['vnfs-configured'] == 'COMPLETED') or \
@@ -613,8 +619,9 @@ class ScalableService(Service):
             # Add scaling monitoring when VNFs are provisioned or anytime after Monitoring
             # is initially turned on
             if proplistdict.get('Monitored', 'False') == 'True' or \
-              ((not self.managed and planinfo['vnfs-configured'] == 'COMPLETED') or \
-               (self.managed and planinfo['vnfs-configurations-deployed'] == 'COMPLETED')):
+               ((not self.managed and planinfo['vnfs-configured'] == 'COMPLETED') or \
+                (self.managed and planinfo['vnfs-configurations-deployed'] == 'COMPLETED' and \
+                 planinfo['load-balancing-configured'] == 'COMPLETED')):
                 # Turn monitoring back on
                 vars = ncs.template.Variables()
                 vars.add('SITE-NAME', site.name);
@@ -767,7 +774,8 @@ class ScalableService(Service):
             self_plan.set_reached('ftdv-ngfw:load-balancing-configured')
         if planinfo.get('scaling-monitoring-enabled', '') == 'COMPLETED':
             self_plan.set_reached('ftdv-ngfw:scaling-monitoring-enabled')
-            if planinfo['failure'].get('service', None) is None:
+            if planinfo['failure'].get('service', None) is None and \
+               planinfo.get('load-balancing-configured', '') == 'COMPLETED':
                 self_plan.set_reached('ncs:ready')
                 service.status = 'Operational'
         if planinfo['failure'].get('service', None) is not None:
@@ -926,6 +934,8 @@ def getVNFPasswords(log, vnf_deployment):
     auths = ((day0_authgroup.name, day0_username, day0_password), 
             (day1_authgroup.name, day1_username, day1_password))
     log.info('VNF auths: {}'.format(auths))
+
+    log.info(_ncs.decrypt(root.devices.authgroups.group[site.elastic_services_controller].default_map.remote_password))
     return auths
 
 def sendRequest(log, ip_address, url_suffix, device_type='ftd', version='latest', operation='GET', json_payload=None, username='admin', password=''):
@@ -1124,6 +1134,8 @@ class DeployManagerConfigurations(Action):
                 service_devices = service.device
                 root = ncs.maagic.get_root(trans)
                 manager = root.devices.device[service_manager.name]
+                ((vnf_day0_authgroup, vnf_day0_username, vnf_day0_password),
+                 (vnf_day1_authgroup, vnf_day1_username, vnf_day1_password)) = getVNFPasswords(self.log, service)
                 task_url = {}
                 for device in service_devices:
                     URL = 'https://{}/api/fmc_platform/v1/auth/generatetoken'.format(manager.address)
@@ -1134,7 +1146,7 @@ class DeployManagerConfigurations(Action):
                     progressive_multiplier = 1
                     timeout = 120
                     while (True):
-                        response = requests.post(url=URL, headers=headers, verify=False, auth=('nsouser', 'cisco123'))
+                        response = requests.post(url=URL, headers=headers, verify=False, auth=('nso', 'cisco123'))
                         self.log.info('Response Code: {}:'.format(response.status_code))
                         if response.status_code == 204:
                             access_token = response.headers['X-auth-access-token']

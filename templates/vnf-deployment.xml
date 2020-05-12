@@ -50,8 +50,8 @@
         <template-id>{templates/template[target/nso-managed-device-vnfm-type='scale']/name}</template-id>
 <?end?>
 <?end?>
-<!-- ?switch-context VNF?>
-        <variable>
+<?switch-context VNF?>
+        <!-- variable>
           <name>VM_GROUP_NAME</name>
           <value>{deployment-name}</value>
         </variable -->
@@ -122,10 +122,10 @@
       </esc-device-template>
 <?switch-context SITE?>
       <resource-allocation>
-        <host-placement>172.26.32.200</host-placement>
+        <host-placement>192.168.2.101</host-placement>
       </resource-allocation>
 <?switch-context CATALOG?>
-      <authgroup>{authgroup}</authgroup>
+      <authgroup>{day0_authgroup}</authgroup>
       <host-key-verification-type>none</host-key-verification-type>
 <?switch-context VNF?>
 <?foreach {scaling/networks/network}?>

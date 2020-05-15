@@ -618,8 +618,8 @@ class ScalableService(Service):
 
             # Add scaling monitoring when VNFs are provisioned or anytime after Monitoring
             # is initially turned on
-            if proplistdict.get('Monitored', 'False') == 'True' or \
-               ((not self.managed and planinfo['vnfs-configured'] == 'COMPLETED') or \
+            #if proplistdict.get('Monitored', 'False') == 'True' or \
+            if ((not self.managed and planinfo['vnfs-configured'] == 'COMPLETED') or \
                 (self.managed and planinfo['vnfs-configurations-deployed'] == 'COMPLETED' and \
                  planinfo['load-balancing-configured'] == 'COMPLETED')):
                 # Turn monitoring back on

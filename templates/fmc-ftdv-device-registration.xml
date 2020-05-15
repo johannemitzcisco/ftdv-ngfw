@@ -16,7 +16,7 @@
       <devicerecords>
         <name>{vm-name}</name>
         <hostName>{networks/network[name='Management']/ip-address</hostName>
-        <accessPolicy><name>HTTP AppID</name></accessPolicy>
+        <accessPolicy><name>AllowAll</name></accessPolicy>
         <regKey>0123456789</regKey>
         <license_caps>BASE</license_caps>
         <license_caps>MALWARE</license_caps>

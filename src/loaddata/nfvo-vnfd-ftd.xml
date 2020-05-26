@@ -208,7 +208,7 @@
       <disk-format>vmdk</disk-format>
       <min-disk>50</min-disk>
       <size>50</size>
-      <image>FTDv-6.5.0-115-Large-Template</image>
+      <image>Cisco-FTD-6.5.0-115-Template-Large</image>
     </sw-image-desc>
     <sw-image-desc>
       <id>FTDv-6_5_0-Large-SRIOV</id>
@@ -236,7 +236,7 @@
       <disk-format>vmdk</disk-format>
       <min-disk>50</min-disk>
       <size>50</size>
-      <image>FTDv-6.5.0-115-Medium-Template</image>
+      <image>Cisco-FTD-6.5.0-115-Template-Medium</image>
     </sw-image-desc>
     <sw-image-desc>
       <id>FTDv-6_5_0-Medium-SRIOV</id>
@@ -264,7 +264,7 @@
       <disk-format>vmdk</disk-format>
       <min-disk>50</min-disk>
       <size>50</size>
-      <image>FTDv-6.5.0-115-Small-Template</image>
+      <image>Cisco-FTD-6.5.0-115-Template-Small</image>
     </sw-image-desc>
     <sw-image-desc>
       <id>FTDv-6_5_0-Small-SRIOV</id>
@@ -331,6 +331,11 @@
         <id>Small-SRIOV</id>
         <min-number-of-instances>1</min-number-of-instances>
         <max-number-of-instances>2</max-number-of-instances>
+      </vdu-profile>
+      <vdu-profile>
+        <id>VCPU-Scaling</id>
+        <min-number-of-instances>1</min-number-of-instances>
+        <max-number-of-instances>1</max-number-of-instances>
       </vdu-profile>
       <instantiation-level>
         <id>LargeVNF-FullDeployment</id>

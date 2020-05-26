@@ -25,7 +25,7 @@
                   <kpi_data>
                     <enabled>{$MONITORS_ENABLED}</enabled>
                     <kpi>
-                      <event_name>VM_OVERLOADED</event_name>
+                      <event_name>FTD_OVERLOADED</event_name>
                       <metric_value>{$SCALEUP_THRESHOLD}</metric_value>
                       <metric_cond>GT</metric_cond>
                       <metric_type>INT32</metric_type>
@@ -50,7 +50,7 @@
                       </metric_collector>
                     </kpi>
                     <kpi>
-                      <event_name>VM_UNDERLOADED</event_name>
+                      <event_name>FTD_UNDERLOADED</event_name>
                       <metric_value>{$SCALEDOWN_THRESHOLD}</metric_value>
                       <metric_cond>LT</metric_cond>
                       <metric_type>INT32</metric_type>
@@ -78,7 +78,7 @@
                   <rules>
                     <admin_rules>
                       <rule>
-                        <event_name>VM_ALIVE</event_name>
+                        <event_name>FTD_ALIVE</event_name>
                         <action>ALWAYS log</action>
                         <action>TRUE servicebooted.sh</action>
                         <!-- Turn off recovery so that we don't get failure condition
@@ -86,12 +86,12 @@
                         <action tags="delete">FALSE recover autohealing</action>
                       </rule>
                       <rule>
-                        <event_name>VM_OVERLOADED</event_name>
+                        <event_name>FTD_OVERLOADED</event_name>
                         <action>ALWAYS log</action>
                         <action>TRUE servicescaleup.sh</action>
                       </rule>
                       <rule>
-                        <event_name>VM_UNDERLOADED</event_name>
+                        <event_name>FTD_UNDERLOADED</event_name>
                         <action>ALWAYS log</action>
                         <action>TRUE servicescaledown.sh</action>
                       </rule>

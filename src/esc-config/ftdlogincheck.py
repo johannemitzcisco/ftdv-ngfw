@@ -26,18 +26,25 @@ if ip_addr == None:
     print "IP Address property must be specified"
     sys.exit(int(3))
 try:
-    r = subprocess.call(['nc', '-zv', ip_addr, '22'])
-    return_code = r
-    if r == 0:
+    r1 = subprocess.call(['nc', '-zv', ip_addr, '8305'])
+    return_code = r1
+    if r1 == 0:
         info = 'Device Login Available'
+        r2 = subprocess.call(['nc', '-zv', ip_addr, '22'])
+        return_code = r2
+        if r2 == 0:
+            info = 'Device Login Available'
+        else:
+            info = 'Device Login Unavailable'
     else:
+        r2 = 2
         info = 'Device Login Unavailable'
 except Exception as e:
     return_code = 2
     info = 'Error trying to reach device'
 finally:
     now = datetime.now()
-    logging.info("{} FTDv ({}) Login Check Response: {} {}".format(now.strftime("%m/%d/%Y %H:%M:%S:"), ip_addr, return_code, info))
+    logging.info("{} FTDv ({}) Login Check Response: {}({},{}) {}".format(now.strftime("%m/%d/%Y %H:%M:%S:"), ip_addr, return_code, r1, r2, info))
     logging.shutdown()
     sys.exit(int(return_code))
 

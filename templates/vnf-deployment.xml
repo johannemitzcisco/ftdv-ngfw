@@ -6,13 +6,13 @@
 <?set-context-node {vnf-deployment[tenant=$DEPLOYMENT-TENANT][deployment-name=$DEPLOYMENT-NAME]}?>
 <?save-context VNF?>
 <?switch-context MANAGER?>
-<?set-context-node {vnf-catalog[name=/site[name=$SITE-NAME]/vnf-deployment[deployment-name=$DEPLOYMENT-NAME]/catalog-vnf]}?>
+<?set-context-node {vnf-catalog[name=$CATALOG-NAME]}?>
 <?save-context CATALOG?>
 
 <?switch-context VNF?>
   <nfv xmlns="urn:etsi:nfv:yang:etsi-nfv-descriptors">
   <vnf-info xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">
-    <name>{deployment-name}</name>
+    <name>{deployment-name}-{$DEPLOY-ORDER}</name>
     <username>admin</username>
 <?switch-context CATALOG?>
     <vnfd>{descriptor-name}</vnfd>
@@ -103,11 +103,11 @@
 <?switch-context VNF?>
         <variable>
           <name>SCALEUP_THRESHOLD</name>
-          <value>{scaling/threshold/scale-up}</value>
+	  <value>{deployment[vnf-catalog-name=$CATALOG-NAME]/scaling/threshold/scale-up}</value>
         </variable>
         <variable>
           <name>SCALEDOWN_THRESHOLD</name>
-          <value>{scaling/threshold/scale-down}</value>
+	  <value>{deployment[vnf-catalog-name=$CATALOG-NAME]/scaling/threshold/scale-down}</value>
         </variable>
 <?if {$MANAGER-IP-ADDRESS!=''}?>
         <variable>
@@ -128,18 +128,20 @@
       <authgroup>{day0_authgroup}</authgroup>
       <host-key-verification-type>none</host-key-verification-type>
 <?switch-context VNF?>
-<?foreach {scaling/networks/network}?>
+<?foreach {networks/network}?>
 <?set NETWORK-NAME={name}?>
       <internal-connection-point>
         <id>{catalog-descriptor-vdu-id}</id>
+<?switch-context VNF?>
+<?set ALLOCATION-NAME={deployment[vnf-catalog-name=$CATALOG-NAME]/resource-pool-allocation[network=$NETWORK-NAME]/name}?> 
+<?switch-context SITE?>
         <connection-point-address>
           <netconf-parameters>
-            <address>{resource-pool-allocation/first-address}</address>
+ 	    <address>{networks/network[name=$NETWORK-NAME]/resource-pool/allocation[name=$ALLOCATION-NAME]/first-address}</address>
             <ip-address-range>
-              <start>{resource-pool-allocation/first-address}</start>
-              <end>{resource-pool-allocation/last-address}</end>
+              <start>{networks/network[name=$NETWORK-NAME]/resource-pool/allocation[name=$ALLOCATION-NAME]/first-address}</start>
+              <end>{networks/network[name=$NETWORK-NAME]/resource-pool/allocation[name=$ALLOCATION-NAME]/last-address}</end>
             </ip-address-range>
-<?switch-context SITE?>
             <netmask>{networks/network[name=$NETWORK-NAME]/netmask}</netmask>
             <gateway>{networks/network[name=$NETWORK-NAME]/gateway-ip-address}</gateway>
 <?switch-context VNF?>
@@ -149,7 +151,7 @@
 <?end?>
     </vdu>
 <?switch-context VNF?>
-<?foreach {scaling/networks/network}?>
+<?foreach {networks/network}?>
 <?set NETWORK-NAME={name}?>
 <?if {ftd-interface/inside}?>
     <vnfd-connection-point>

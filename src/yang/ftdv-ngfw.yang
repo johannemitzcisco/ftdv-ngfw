@@ -6,6 +6,7 @@ module ftdv-ngfw {
   import ietf-inet-types { prefix inet; }
   import tailf-common { prefix tailf; }
   import tailf-ncs { prefix ncs; }
+  import tailf-kicker { prefix kicker; }
 //  import cisco-etsi-nfvo { prefix nfvo; }
   import etsi-nfv-descriptors { prefix nfv; }
   import network { prefix network; }
@@ -265,22 +266,16 @@ module ftdv-ngfw {
   }
 
   grouping vnf-deployment-grouping {
-    leaf deployment-name {
-      tailf:info "Unique deployment/service id";
-      tailf:cli-allow-range;
-      type string;
-    }
     leaf tenant {
       tailf:info "Tenant of this site and owner of the VNF";
       type leafref {
         path "/ftdv-ngfw:vnf-manager/ftdv-ngfw:site/ftdv-ngfw:tenant";
       }
     }
-    leaf catalog-vnf {
-      tailf:info "VNF from the catalog to deploy";
-      type leafref {
-        path "/ftdv-ngfw:vnf-manager/ftdv-ngfw:vnf-catalog/ftdv-ngfw:name";
-      }
+    leaf deployment-name {
+      tailf:info "Unique deployment/service id";
+      tailf:cli-allow-range;
+      type string;
     }
     container manager {
       leaf name {
@@ -292,69 +287,103 @@ module ftdv-ngfw {
         when "name";
       }
     }
-    container scaling {
-      tailf:info "Scaling attributes for the VNF";
-      container threshold {
-        leaf scale-up {
-          tailf:info "Threshold to signal addition VNFs are needed";
-          type int64;
-        }
-        leaf scale-down {
-          tailf:info "Threshold to signal that VNFs can be decommissioned";
-          type int64;
-        }
-      }
-      container networks {
-        list network {
-          key name;
-          leaf name {
+    container networks {
+      list network {
+        key name;
+        leaf name {
 // TODO: Need to put in a check that vnf-catalog item being used
 //       has all its networks represented here as the vnf-deployment.xml
 //       is expecting it
-            type leafref {
-              path "../../../../../networks/network/name";
-            }
+          type leafref {
+            path "../../../../networks/network/name";
           }
-          leaf catalog-descriptor-vdu-id {
-            type leafref {
-                path "/nfv:nfv/nfv:vnfd/nfv:vdu/nfv:int-cpd/nfv:id";
-            }
+        }
+        leaf catalog-descriptor-vdu-id {
+          type leafref {
+              path "/nfv:nfv/nfv:vnfd/nfv:vdu/nfv:int-cpd/nfv:id";
+          }
 //            must "/nfv:nfv/nfv:vnfd[nfv:id=deref(../../../catalog-vnf/../descriptor-name]/nfv:vdu[nfv:id=deref(../../../catalog-vnf/../descriptor-vdu]/nfv:int-cpd/nfv:id" {
 //              tailf:dependency "/nfv:nfv/nfv:vnfd/nfv:vdu/nfv:int-cpd";
 //            }
-          }
-          container resource-pool-allocation {
-            uses network:network-allocation-grouping {
-              refine first-address {
-                config "false";
-              }
-              refine last-address {
-                config "false";
+        }
+        container ftd-interface {
+          choice ftd-interface {
+            case inside {
+              leaf inside {
+                type empty;
               }
             }
-          }
-          container ftd-interface {
-            choice ftd-interface {
-              case inside {
-                leaf inside {
-                  type empty;
-                }
-              }
-              case outside {
-                leaf outside {
-                  type empty;
-                }
+            case outside {
+              leaf outside {
+                type empty;
               }
             }
           }
-          leaf-list ftd-route-network {
-            type leafref {
-              path  "../../../../../networks/network/name";
-            }
-            must "deref(.)/../ftd-network" {
-              tailf:dependency "/vnf-manager/site/networks/network";
-            }
+        }
+        leaf-list ftd-route-network {
+          type leafref {
+            path  "../../../../networks/network/name";
           }
+          must "deref(.)/../ftd-network" {
+            tailf:dependency "/vnf-manager/site/networks/network";
+          }
+        }
+      }
+    }
+    list deployment {
+      key vnf-catalog-name;
+      leaf vnf-catalog-name {
+        type leafref {
+          path "/ftdv-ngfw:vnf-manager/ftdv-ngfw:vnf-catalog/ftdv-ngfw:name";
+        }
+      }
+      leaf order {
+        type uint16;
+        default 1;
+      }
+      must "((../scaling/type != 'vcpu-static' and count(.) = 1) or
+             (../scaling/type = 'vcpu-static' and count(.) > 0))";
+      list resource-pool-allocation {
+        config "false";
+        key network;
+        leaf network {
+          type string;
+        }
+        leaf name {
+          type string;
+        }
+      }
+      container scaling {
+        container threshold {
+          leaf scale-up {
+            when "../../../../scaling/type != 'none'";
+            tailf:info "Threshold to signal addition VNFs/larger sized VNF are/is needed";
+            type int64;
+          }
+          leaf scale-down {
+            when "../../../../scaling/type != 'none'";
+            tailf:info "Threshold to signal that VNFs can be decommissioned or smaller sized VNF should be used";
+            type int64;
+          }
+        }
+        leaf status {
+          config "false";
+          type enumeration {
+            enum "inactive";
+            enum "active";
+          }
+          default "inactive";
+        }
+      }
+    }
+    container scaling {
+      tailf:info "Scaling attributes";
+      leaf type {
+        mandatory "true";
+        type enumeration {
+          enum "none";
+          enum "horizontal";
+          enum "vcpu-static";
         }
       }
       container load-balance {
@@ -387,6 +416,8 @@ module ftdv-ngfw {
         enum "Synchronizing";
         enum "Synchronized";
         enum "Configurable";
+        enum "ConfiguredStage1";
+        enum "ConfiguredStage2";
         enum "Configured";
         enum "ConfigurationsDeployed";
         enum "Operational";
@@ -425,6 +456,10 @@ module ftdv-ngfw {
           }
         }
       }
+      leaf vnf_catalog {
+        config "false";
+        type string;
+      }
       leaf status {
         tailf:info "Status of the Deployment";
         config "false";
@@ -453,7 +488,6 @@ module ftdv-ngfw {
       uses device-action-grouping;
       uses state-grouping;
     }
-
   }
 
   container vnf-manager {
@@ -543,6 +577,42 @@ module ftdv-ngfw {
 
         key "tenant deployment-name";
         uses vnf-deployment-grouping;
+      }
+    }
+    tailf:action handle-esc-notifications {
+      tailf:actionpoint ftdv-ngfw-handle-esc-notifications;
+      input {
+        uses kicker:action-input-params;
+      }
+      output {}
+    }
+
+    container devices {
+      config "false";
+      list device {
+        key vm_name;
+        leaf vm_name {
+          type string;
+        }
+        leaf site {
+          type string;
+        }
+        container vnf-deployment {
+          leaf tenant {
+            type string;
+          }
+          leaf deployment-name {
+            type string;
+          }
+        }
+        leaf event-type {
+          type string;
+        }
+      }
+      tailf:action delete-events {
+        tailf:actionpoint ftdv-ngfw-delete-device-events;
+        input {}
+        output {}
       }
     }
     container config {

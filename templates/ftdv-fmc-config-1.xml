@@ -12,7 +12,7 @@
     <name>{string(manager/name)}</name>
       <config>
       <devices xmlns="http://tail-f.com/ned/cisco-fmc">
-<?foreach {scaling/networks/network[ftd-interface]}?>
+<?foreach {networks/network[ftd-interface]}?>
 <?set NETWORK-NAME={name}?>
       <devicerecords>
         <name>{$VM_NAME}</name>

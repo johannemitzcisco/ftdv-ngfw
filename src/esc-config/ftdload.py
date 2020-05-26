@@ -36,7 +36,7 @@ def get_password():
     return password
 
 def get_stats(ip, username, password):
-    logging.info("\nStarting ===========================================")
+    logging.info('\nStarting ===========================================')
     pre_ssh=paramiko.SSHClient()
     pre_ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     pre_ssh.connect(ip, username=username, password=password,
@@ -48,7 +48,7 @@ def get_stats(ip, username, password):
     data = ""
     while True:
         data_part = ssh.recv(1024)
-#        logging.info(str(count)+' ---:'+data_part)
+        #logging.info(str(count)+' ---:'+data_part)
         if len(data_part) == 0:
             logging.info("*** Connection terminated")
             read_data = False
@@ -60,18 +60,34 @@ def get_stats(ip, username, password):
             connections = data.split('> show conn count')[1].split(' ')[0].lstrip()
             logging.info('connections: '+connections)
             ssh.close()
-            return connections
+            return int(connections)
 
 # Main
 try:
+    logging.info('log started')
     now = datetime.now()
     ip_address = get_ip_addr()
     if ip_address == None:
         print "IP Address property must be specified"
         sys.exit(int(3))
     count = get_stats(ip_address, get_username(), get_password())
-    count = 1
+    count = 1000
+    count = float(count/100)
+   # if count > 3 and :
+   #     count = '3'
+   # else:
+   #     count = '0'
+   # count = '0'
+   # if '80' in ip_address.split('.'):
+   #     count = '3'
+   # else:
+   #      count = '1'
+   # count = '0'
+    print '{}'
+    #print 'esc-threshold:{}'.format(count)
+    #sys.stdout.write('esc-threshold:200')
 #    logging.error("{} FTDv ({}) Load Check: {}".format(now.strftime("%m/%d/%Y %H:%M:%S:"), ip_address, count))
+    logging.info('COUNT:'+str(int(count)))
     sys.exit(int(count))
 except Exception as e:
     logging.error(traceback.format_exc())

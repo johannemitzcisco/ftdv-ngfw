@@ -33,6 +33,12 @@
       <virtual-compute-desc>Large</virtual-compute-desc>
       <virtual-storage-desc>root</virtual-storage-desc>
       <sw-image-desc>FTDv-6_5_0-Large</sw-image-desc>
+      <device-type xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">
+        <generic>
+          <ned-id>cisco-ftd-gen-1.4</ned-id>
+        </generic>
+        <port>443</port>
+      </device-type>
     </vdu>
     <vdu>
       <id>Large-SRIOV</id>
@@ -59,6 +65,12 @@
       <virtual-compute-desc>Large</virtual-compute-desc>
       <virtual-storage-desc>root</virtual-storage-desc>
       <sw-image-desc>FTDv-6_5_0-Large</sw-image-desc>
+      <device-type xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">
+        <generic>
+          <ned-id>cisco-ftd-gen-1.4</ned-id>
+        </generic>
+        <port>443</port>
+      </device-type>
     </vdu>
     <vdu>
       <id>Medium</id>
@@ -85,6 +97,12 @@
       <virtual-compute-desc>Medium</virtual-compute-desc>
       <virtual-storage-desc>root</virtual-storage-desc>
       <sw-image-desc>FTDv-6_5_0-Medium</sw-image-desc>
+      <device-type xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">
+        <generic>
+          <ned-id>cisco-ftd-gen-1.4</ned-id>
+        </generic>
+        <port>443</port>
+      </device-type>
     </vdu>
     <vdu>
       <id>Medium-SRIOV</id>
@@ -111,6 +129,12 @@
       <virtual-compute-desc>Medium</virtual-compute-desc>
       <virtual-storage-desc>root</virtual-storage-desc>
       <sw-image-desc>FTDv-6_5_0-Medium</sw-image-desc>
+      <device-type xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">
+        <generic>
+          <ned-id>cisco-ftd-gen-1.4</ned-id>
+        </generic>
+        <port>443</port>
+      </device-type>
     </vdu>
     <vdu>
       <id>Small</id>
@@ -137,6 +161,12 @@
       <virtual-compute-desc>Small</virtual-compute-desc>
       <virtual-storage-desc>root</virtual-storage-desc>
       <sw-image-desc>FTDv-6_5_0-Small</sw-image-desc>
+      <device-type xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">
+        <generic>
+          <ned-id>cisco-ftd-gen-1.4</ned-id>
+        </generic>
+        <port>443</port>
+      </device-type>
     </vdu>
     <vdu>
       <id>Small-SRIOV</id>
@@ -163,6 +193,12 @@
       <virtual-compute-desc>Small</virtual-compute-desc>
       <virtual-storage-desc>root</virtual-storage-desc>
       <sw-image-desc>FTDv-6_5_0-Small-SRIOV</sw-image-desc>
+      <device-type xmlns="http://cisco.com/ns/nso/cfp/cisco-etsi-nfvo">
+        <generic>
+          <ned-id>cisco-ftd-gen-1.4</ned-id>
+        </generic>
+        <port>443</port>
+      </device-type>
     </vdu>
     <virtual-compute-desc>
       <id>Large</id>
@@ -331,11 +367,6 @@
         <id>Small-SRIOV</id>
         <min-number-of-instances>1</min-number-of-instances>
         <max-number-of-instances>2</max-number-of-instances>
-      </vdu-profile>
-      <vdu-profile>
-        <id>VCPU-Scaling</id>
-        <min-number-of-instances>1</min-number-of-instances>
-        <max-number-of-instances>1</max-number-of-instances>
       </vdu-profile>
       <instantiation-level>
         <id>LargeVNF-FullDeployment</id>

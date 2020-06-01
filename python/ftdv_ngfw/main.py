@@ -106,7 +106,7 @@ class ScalableService(Service):
             if service.scaling.type == 'none':
                 max_vnf_count = 1
             elif service.scaling.type == 'horizontal':
-                vnf_catalog = deployments_ord[0][0]
+                vnf_catalog = deployments_ord[0][1]['vnf_catalog']
                 max_vnf_count = root.nfv.vnfd[vnf_catalog.descriptor_name] \
                                 .df[vnf_catalog.descriptor_flavor] \
                                 .vdu_profile[vnf_catalog.descriptor_vdu] \
@@ -287,10 +287,6 @@ class ScalableService(Service):
                         # Initialize the plan status information for the device
                         planinfo_devices[nfv_device.device_name] = {}
                         # Keep track of Device's and the IP addresses in the service operational model
-#                            dev_status = []
-#                            for status in nfv_device.status:
-#                                self.log.info(status.type)
-#                                dev_status.append(status.type)
                         self.log.info('Creating Device: ', nfv_device.device_name, ' Status: ', list(nfv_device.status)[0].type)
                         service_device = service.device.create(nfv_device.device_name)
                         service_device.vm_name = nfv_device.name
@@ -311,17 +307,27 @@ class ScalableService(Service):
                                 device_network.management.create()
                         planinfo_devices[nfv_device.device_name]['deployed'] = 'NOT COMPLETED'
                         planinfo_devices[nfv_device.device_name]['api-available'] = 'NOT COMPLETED'
-                        dev_status = []
-                        for status in nfv_device.status:
-                            dev_status.append(status.type)
-                        if 'deployed' in dev_status:
-                            planinfo_devices[nfv_device.device_name]['deployed'] = 'COMPLETED'
-                        else:
-                            all_vnfs_deployed = False
-                        if dev_status[0] == 'alive':
-                            planinfo_devices[nfv_device.device_name]['api-available'] = 'COMPLETED'
-                        else:
-                            all_vnfs_alive = False
+                        with ncs.maapi.single_read_trans(tctx.uinfo.username, 'itd',
+                                                        db=ncs.OPERATIONAL) as trans:
+                            op_root = ncs.maagic.get_root(trans)
+                            if not self.managed:
+                                dev_plan = op_root.nfv.internal \
+                                            .netconf_deployment_plan[deployments[service_device.vnf_catalog]['nfv_deployment_name']] \
+                                            .plan.component['cisco-nfvo-nano-services:vm-device', service_device.vm_name]
+                            else:
+                                dev_plan = op_root.nfv.internal \
+                                          .netconf_deployment_plan[deployments[service_device.vnf_catalog]['nfv_deployment_name']] \
+                                          .plan.component['cisco-nfvo-nano-services:unmanaged-vm-device', service_device.vm_name]
+                            dev_status_ready = dev_plan.state['ncs:ready'].status
+                            dev_status_deployed = dev_plan.state['cisco-nfvo-nano-services:deployed'].status
+                            if 'reached' == dev_status_deployed:
+                                planinfo_devices[nfv_device.device_name]['deployed'] = 'COMPLETED'
+                            else:
+                                all_vnfs_deployed = False
+                            if 'reached' == dev_status_ready:
+                                planinfo_devices[nfv_device.device_name]['api-available'] = 'COMPLETED'
+                            else:
+                                all_vnfs_alive = False
                 else:
                     all_vnfs_deployed = False
                     all_vnfs_alive = False
@@ -336,9 +342,6 @@ class ScalableService(Service):
 
             # Set which deployments should be active johan
             try:
-                for deployment in deployments.values():
-                    self.log.info('start/stop deploy1: ', deployment['deployment'].vnf_catalog_name, ' ',  deployment['deployment'].scaling.status)
-
                 if len([device for device in vnf_manager.devices.device if device.site == site.name \
                         and device.vnf_deployment.tenant == service.tenant \
                         and device.vnf_deployment.deployment_name == service.deployment_name \
@@ -346,68 +349,62 @@ class ScalableService(Service):
                     for vnf_catalog_name, deployment in deployments.items():
                         if proplistdict.get(vnf_catalog_name+'-scaling', 'unknown') != 'stopped':
                             proplistdict[vnf_catalog_name+'-scaling'] = 'stop'
-                        deployment['deployment'].scaling.status = 'inactive'
-                    deployments_ord[0][1]['deployment'].scaling.status = 'active'
                     proplistdict[deployments_ord[0][0]+'-scaling'] = 'started'
 
                 #if True:
                 if False:
-                    deployments_ord[0][1]['deployment'].scaling.status = 'active'
                     proplistdict[deployments_ord[0][0]+'-scaling'] = 'started'
-                    deployments_ord[1][1]['deployment'].scaling.status = 'inactive'
                     proplistdict[deployments_ord[1][0]+'-scaling'] = 'stopped'
-                    
-                for deployment in deployments.values():
-                    self.log.info('start/stop deploy2: ', deployment['deployment'].vnf_catalog_name, ' ',  deployment['deployment'].scaling.status)
                 
                 # Check if an ESC event triggered this
-                for device in service.device:
-                    dev_status = []
-                    for status in nfv_device.status:
-                        dev_status.append(status.type)
-                    if vnf_manager.devices.device.exists(device.vm_name):
-                        event_type = vnf_manager.devices.device[device.vm_name].event_type
-                        vnf_catalog_name = device.vnf_catalog
-                        self.log.info('Deployment: ', vnf_catalog_name, ', Device Name: ', device.name, ', Event: ', event_type)
-                        order = service.deployment[vnf_catalog_name].order
-                        index = -1
-                        for deployment in deployments_ord:
-                            index = index + 1
-                            if deployment[1]['order'] == order:
-                                vm_status = root.devices.device[site.elastic_services_controller].live_status.esc__esc_datamodel.opdata \
-                                                .tenants.tenant[service.tenant].deployments[deployment[1]['nfv_deployment_name']].state_machine \
-                                                .vm_state_machines.vm_state_machine[device.vm_name].state 
-                                if event_type == 'VM_OVERLOADED' and index < len(deployments_ord)-1:
-                                    for dev in service.device:
-                                        if dev.vnf_catalog == deployments_ord[index+1][1]['deployment'].vnf_catalog_name:
-                                            new_vm_device = dev
-                                    new_vm_status = root.devices.device[site.elastic_services_controller].live_status.esc__esc_datamodel.opdata \
-                                                    .tenants.tenant[service.tenant].deployments[deployments_ord[index+1][1]['nfv_deployment_name']].state_machine \
-                                                    .vm_state_machines.vm_state_machine[new_vm_device.vm_name].state
-                                    self.log.info('start/stop deploy: ', device.name, ' ', new_vm_status, ' ', proplistdict[device.vnf_catalog+'-scaling'])
-                                    if str(new_vm_status) in ('VM_SHUTOFF_STATE') and proplistdict[deployments_ord[index+1][0]+'-scaling'] != 'started':
-                                        proplistdict[deployments_ord[index+1][0]+'-scaling'] = 'start'
-                                    elif str(new_vm_status) in ('VM_ALIVE_STATE') and proplistdict[deployments_ord[index][0]+'-scaling'] != 'stopped':
-                                        proplistdict[deployments_ord[index][0]+'-scaling'] = 'stop'
-                                elif event_type == 'VM_UNDERLOADED' and index > 0:
-                                    for dev in service.device:
-                                        if dev.vnf_catalog == deployments_ord[index-1][1]['deployment'].vnf_catalog_name:
-                                            new_vm_device = dev
-                                    new_vm_status = root.devices.device[site.elastic_services_controller].live_status.esc__esc_datamodel.opdata \
-                                                    .tenants.tenant[service.tenant].deployments[deployments_ord[index-1][1]['nfv_deployment_name']].state_machine \
-                                                    .vm_state_machines.vm_state_machine[new_vm_device.vm_name].state
-                                    self.log.info('start/stop deploy: ', device.name, ' ', new_vm_status, ' ', proplistdict[device.vnf_catalog+'-scaling'])
-                                    if str(new_vm_status) in ('VM_SHUTOFF_STATE') and proplistdict[deployments_ord[index-1][0]+'-scaling'] != 'started':
-                                        proplistdict[deployments_ord[index-1][0]+'-scaling'] = 'start'
-                                    elif str(new_vm_status) in ('VM_ALIVE_STATE') and proplistdict[deployments_ord[index][0]+'-scaling'] != 'stopped':
-                                        proplistdict[deployments_ord[index][0]+'-scaling'] = 'stop'
-                                elif event_type == 'VM_STOPPED' and proplistdict[deployment[0]+'-scaling'] == 'stopping':
-                                    proplistdict[deployment[0]+'-scaling'] = 'stopped'
-                                elif event_type in ('VM_STARTED', 'VM_ALIVE'):
-                                    if dev_status[0] == 'alive':
-                                        proplistdict[deployment[0]+'-scaling'] = 'started'
+                if service.scaling.type == 'vcpu-static':
+                    for device in service.device:
+                        dev_status = []
+                        for status in nfv_device.status:
+                            dev_status.append(status.type)
+                        if vnf_manager.devices.device.exists(device.vm_name):
+                            event_type = vnf_manager.devices.device[device.vm_name].event_type
+                            vnf_catalog_name = device.vnf_catalog
+                            self.log.info('Deployment: ', vnf_catalog_name, ', Device Name: ', device.name, ', Event: ', event_type)
+                            order = service.deployment[vnf_catalog_name].order
+                            index = -1
+                            for deployment in deployments_ord:
+                                index = index + 1
+                                if deployment[1]['order'] == order:
+                                    vm_status = root.devices.device[site.elastic_services_controller].live_status.esc__esc_datamodel.opdata \
+                                                    .tenants.tenant[service.tenant].deployments[deployment[1]['nfv_deployment_name']].state_machine \
+                                                    .vm_state_machines.vm_state_machine[device.vm_name].state 
+                                    if event_type == 'VM_OVERLOADED' and index < len(deployments_ord)-1:
+                                        for dev in service.device:
+                                            if dev.vnf_catalog == deployments_ord[index+1][1]['deployment'].vnf_catalog_name:
+                                                new_vm_device = dev
+                                        new_vm_status = root.devices.device[site.elastic_services_controller].live_status.esc__esc_datamodel.opdata \
+                                                        .tenants.tenant[service.tenant].deployments[deployments_ord[index+1][1]['nfv_deployment_name']].state_machine \
+                                                        .vm_state_machines.vm_state_machine[new_vm_device.vm_name].state
+                                        self.log.info('start/stop deploy: ', device.name, ' ', new_vm_status, ' ', proplistdict[device.vnf_catalog+'-scaling'])
+                                        if str(new_vm_status) in ('VM_SHUTOFF_STATE') and proplistdict[deployments_ord[index+1][0]+'-scaling'] != 'started':
+                                            proplistdict[deployments_ord[index+1][0]+'-scaling'] = 'start'
+                                        elif str(new_vm_status) in ('VM_ALIVE_STATE') and proplistdict[deployments_ord[index][0]+'-scaling'] != 'stopped':
+                                            proplistdict[deployments_ord[index][0]+'-scaling'] = 'stop'
+                                    elif event_type == 'VM_UNDERLOADED' and index > 0:
+                                        for dev in service.device:
+                                            if dev.vnf_catalog == deployments_ord[index-1][1]['deployment'].vnf_catalog_name:
+                                                new_vm_device = dev
+                                        new_vm_status = root.devices.device[site.elastic_services_controller].live_status.esc__esc_datamodel.opdata \
+                                                        .tenants.tenant[service.tenant].deployments[deployments_ord[index-1][1]['nfv_deployment_name']].state_machine \
+                                                        .vm_state_machines.vm_state_machine[new_vm_device.vm_name].state
+                                        self.log.info('start/stop deploy: ', device.name, ' ', new_vm_status, ' ', proplistdict[device.vnf_catalog+'-scaling'])
+                                        if str(new_vm_status) in ('VM_SHUTOFF_STATE') and proplistdict[deployments_ord[index-1][0]+'-scaling'] != 'started':
+                                            proplistdict[deployments_ord[index-1][0]+'-scaling'] = 'start'
+                                        elif str(new_vm_status) in ('VM_ALIVE_STATE') and proplistdict[deployments_ord[index][0]+'-scaling'] != 'stopped':
+                                            proplistdict[deployments_ord[index][0]+'-scaling'] = 'stop'
+                                    elif event_type == 'VM_STOPPED' and proplistdict[deployment[0]+'-scaling'] == 'stopping':
+                                        proplistdict[deployment[0]+'-scaling'] = 'stopped'
+                                    elif event_type in ('VM_STARTED', 'VM_ALIVE'):
+                                        if dev_status[0] == 'alive':
+                                            proplistdict[deployment[0]+'-scaling'] = 'started'
 
-                    self.log.info('start/stop device: ', device.name, ' ', deployments[device.vnf_catalog]['deployment'].scaling.status, ' ', proplistdict.get(device.vnf_catalog+'-scaling', 'unknown'))
+                        self.log.info('start/stop device: ', device.name, ' ', proplistdict.get(device.vnf_catalog+'-scaling', 'unknown'))
             except Exception:
                 self.log.error(traceback.format_exc())
 
@@ -535,20 +532,15 @@ class ScalableService(Service):
                 all_vnfs_registered = True
                 planinfo['vnfs-registered-with-nso'] = 'NOT COMPLETED'
                 for device in service.device:
-                    planinfo_devices[device.name]['registered-with-nso'] = 'NOT COMPLETED'
-                    try:
-                        if root.devices.device[device.name]:
-                            self.log.info('Device Registered with NSO: '+device.name)
-                            planinfo_devices[device.name]['registered-with-nso'] = 'COMPLETED'
-                    except KeyError as e:
+                    dev_plan = root.nfv.internal \
+                                .netconf_deployment_plan[deployments[service_device.vnf_catalog]['nfv_deployment_name']] \
+                                .plan.component['cisco-nfvo-nano-services:vm-device', service_device.vm_name]
+                    dev_status_registered = dev_plan.state['cisco-nfvo-nano-services:device-created'].status
+                    if 'reached' == dev_status_registered:
                         planinfo_devices[device.name]['registered-with-nso'] = 'COMPLETED'
-                        pass        
-                    except Exception as e:
-                        failure = True
-                        self.log.error(e)
-                        self.log.error(traceback.format_exc())
-                        self.addPlanFailure(planinfo, device.name, 'registered-with-nso')
-                        self.addPlanFailure(planinfo, 'service', 'vnfs-registered-with-nso')
+                    else:
+                        planinfo_devices[device.name]['registered-with-nso'] = 'NOT COMPLETED'
+                        all_vnfs_registered = False
                 if all_vnfs_registered and len(service.device) > 0 and not failure:
                     planinfo['vnfs-registered-with-nso'] = 'COMPLETED'
 
@@ -563,17 +555,8 @@ class ScalableService(Service):
                     for device in service.device:
                         try:
                             planinfo_devices[device.name]['initialized'] = 'NOT COMPLETED'
-                            if planinfo_devices[device.name]['api-available'] == 'COMPLETED':
-                                # Check if device has been provisioned
-                                dev = op_root.devices.device[device.name]
-                                input = dev.config.cisco_ftd__ftd.actions.generic_call.get_input()
-                                input.http_method = 'GET'
-                                input.uri = '/policy/accesspolicies'
-                                input.body = '{}'
-                                output = dev.config.cisco_ftd__ftd.actions.generic_call(input)
-                                if 'Failed' in output.result: 
-                                    device.provision_ftd_device()
-                                root.devices.device[device.name].authgroup = deployment['vnf_day1_authgroup']
+                            if planinfo_devices[nfv_device.device_name]['api-available'] == 'COMPLETED' and \
+                                    len(op_root.devices.device[device.name].config.cisco_ftd__ftd.policy.accesspolicies) > 0:
                                 planinfo_devices[device.name]['initialized'] = 'COMPLETED'
                                 self.log.info('Device Provisioned: '+device.name)
                             else:
@@ -596,9 +579,12 @@ class ScalableService(Service):
                     planinfo_devices[device.name]['synchronized-with-nso'] = 'NOT COMPLETED'
                     planinfo_devices[device.name]['configurable'] = 'NOT COMPLETED'
                     try:
-                        if planinfo_devices[device.name]['initialized'] == 'COMPLETED':
-                            self.log.info('Syncing Device: ', device.name)
-                            root.devices.device[device.name].sync_from()
+                        self.log.info('Checking Device Synced: ', device.name)
+                        dev_plan = root.nfv.internal \
+                                    .netconf_deployment_plan[deployments[service_device.vnf_catalog]['nfv_deployment_name']] \
+                                    .plan.component['cisco-nfvo-nano-services:vm-device', service_device.vm_name]
+                        dev_status_synced = dev_plan.state['cisco-nfvo-nano-services:sync'].status
+                        if 'reached' == dev_status_synced:
                             self.log.info('Device Synced: ', device.name)
                             planinfo_devices[device.name]['synchronized-with-nso'] = 'COMPLETED'
                             planinfo_devices[device.name]['configurable'] = 'COMPLETED'
@@ -761,10 +747,6 @@ class ScalableService(Service):
                     vars.add('DEPLOY-PASSWORD', deployment['vnf_day0_password']) # admin password to set when deploy
                     vars.add('MONITOR-TYPE', 'load')
                     vars.add('MONITORS-ENABLED', 'true');
-                    #if deployment['deployment'].scaling.status == 'active':
-                    #    vars.add('MONITORS-ENABLED', 'true');
-                    #else:
-                    #    vars.add('MONITORS-ENABLED', 'false');
                     vars.add('MONITOR-USERNAME', deployment['vnf_day1_username'])
                     vars.add('MAX-INSTANCES', nfv_vnfd.df[deployment['vnf_catalog'].descriptor_flavor]
                                                .vdu_profile[deployment['vnf_catalog'].descriptor_vdu]
@@ -783,7 +765,6 @@ class ScalableService(Service):
                     # Set the context of the template to /vnf-manager
                     template = ncs.template.Template(service._parent._parent._parent._parent)
                     self.log.info(vnf_catalog_name, ' Applying template: vnf-deployment')
-                    self.log.info(deployment['deployment'].scaling.status)
                     template.apply('vnf-deployment', vars)
                 proplistdict['Monitored'] = 'True'
                 planinfo['scaling-monitoring-enabled'] = 'COMPLETED'
@@ -792,7 +773,7 @@ class ScalableService(Service):
             if proplistdict.get('operational', 'false') == 'true':
                 inputs = root.devices.device[site.elastic_services_controller].ncs__rpc.esc__rpc_vmAction.vmAction.get_input()
                 for device in service.device:
-                    self.log.info('start/stop: ', device.name, ' ', deployments[device.vnf_catalog]['deployment'].scaling.status, ' ', proplistdict[device.vnf_catalog+'-scaling'])
+                    self.log.info('start/stop: ', device.name, ' ', proplistdict[device.vnf_catalog+'-scaling'])
                     inputs.vmName = device.vm_name
                     del inputs.actionType
                     if proplistdict[device.vnf_catalog+'-scaling'] in ('start'):
@@ -813,23 +794,18 @@ class ScalableService(Service):
                 proplistdict['operational'] = 'true'
 
             for device in service.device:
-                if not self.managed:
-#                    if planinfo_devices[device.name]['synchronized-with-nso'] != 'COMPLETED':
-#                        self.applySyncDeviceKicker(root, self.log, site, service, device) 
-                    if planinfo_devices[device.name]['registered-with-nso'] == 'COMPLETED' and \
-                        planinfo_devices[device.name]['synchronized-with-nso'] != 'COMPLETED':
-                        # Apply kicker to rerun service once a devices configuration shows up after synchronization
-                        self.applyDeviceSyncedKicker(root, self.log, service.deployment_name, 
-                                                     site.name, service.tenant, service.deployment_name,
-                                                     site.elastic_services_controller, device.name)
-                else:
+                if self.managed:
                     if planinfo_devices[device.name]['deployed'] == 'COMPLETED' and \
                      planinfo_devices[device.name]['configurable'] != 'COMPLETED':
                         self.applyDeviceManagedKicker(root, self.log, site, service, device)
-            if planinfo['vnfs-configured'] == 'COMPLETED' and \
-               planinfo['vnfs-configurations-deployed'] != 'COMPLETED':
-                self.applyConfigurationsDeployedKicker(root, self.log, site, service, device)
-            
+                    if planinfo['vnfs-configured'] == 'COMPLETED' and \
+                         planinfo['vnfs-configurations-deployed'] != 'COMPLETED':
+                        self.applyConfigurationsDeployedKicker(root, self.log, site, service, device)
+                else:
+                    if planinfo_devices[device.name]['deployed'] == 'COMPLETED':
+                        self.applyNFVODevicePlanKicker(root, self.log, device.vm_name, site.name, \
+                                service.tenant, service.deployment_name, deployments[device.vnf_catalog]['nfv_deployment_name'], device.vm_name)
+
         except Exception as e:
             self.log.error("Exception Here:")
             self.log.info(e)
@@ -879,9 +855,9 @@ class ScalableService(Service):
         self_plan.append_state('ncs:init')
         self_plan.append_state('ftdv-ngfw:ip-addressing')
         self_plan.append_state('ftdv-ngfw:vnfs-deployed')
+        self_plan.append_state('ftdv-ngfw:vnfs-api-available')
         if not self.managed:
             self_plan.append_state('ftdv-ngfw:vnfs-registered-with-nso')
-        self_plan.append_state('ftdv-ngfw:vnfs-api-available')
         if self.managed:
             self_plan.append_state('ftdv-ngfw:vnfs-registered-with-manager')
             self_plan.append_state('ftdv-ngfw:vnfs-synchronized-with-manager')
@@ -958,9 +934,9 @@ class ScalableService(Service):
             device_plan = PlanComponent(service, device, 'ftdv-ngfw:vnf')
             device_plan.append_state('ncs:init')
             device_plan.append_state('ftdv-ngfw:deployed')
+            device_plan.append_state('ftdv-ngfw:api-available')
             if not self.managed:
                 device_plan.append_state('ftdv-ngfw:registered-with-nso')
-            device_plan.append_state('ftdv-ngfw:api-available')
             if self.managed:
                 device_plan.append_state('ftdv-ngfw:registered-with-manager')
                 device_plan.append_state('ftdv-ngfw:synchronized-with-manager')
@@ -976,15 +952,15 @@ class ScalableService(Service):
             if device_states.get('deployed', '') == 'COMPLETED':
                 device_plan.set_reached('ftdv-ngfw:deployed')
                 service.device[device].status= 'Starting'
-            if not self.managed:
-                if device_states.get('registered-with-nso', '') == 'COMPLETED':
-                    device_plan.set_reached('ftdv-ngfw:registered-with-nso')
             if device_states.get('api-available', '') == 'COMPLETED':
                 device_plan.set_reached('ftdv-ngfw:api-available')
                 if self.managed:
                     service.device[device].status = 'Registering'
                 else:
                     service.device[device].status = 'Provisioning'
+            if not self.managed:
+                if device_states.get('registered-with-nso', '') == 'COMPLETED':
+                    device_plan.set_reached('ftdv-ngfw:registered-with-nso')
             if self.managed:
                 if device_states.get('registered-with-manager', '') == 'COMPLETED':
                     device_plan.set_reached('ftdv-ngfw:registered-with-manager')
@@ -1039,13 +1015,12 @@ class ScalableService(Service):
         kick_monitor_node = ("/vnf-manager/site[name='{}']/vnf-deployment[tenant='{}'][deployment-name='{}']/device[name='{}']").format(
                               site.name, service.tenant, service.deployment_name, device.name)
         trigger_expr = "status='Synchronizing'"
-        kick_node = ("/vnf-manager/site[name='{}']/vnf-deployment[tenant='{}'][deployment-name='{}']/device[name='{}']").format(
-                     site.name, service.tenant, service.deployment_name, device.name)
+        kick_node = ("/devices/device[name='{}']").format(device.name)
         self.applyKicker(root, log, service.tenant+'-'+service.deployment_name, site.name, service.tenant, service.deployment_name,
-                         'sync-vnf-with-nso', int(device.name[-1])+20, kick_monitor_node, kick_node, 'vnfdeviceProvisioned', trigger_expr, device.name)
+                         'sync-from', int(device.name[-1])+20, kick_monitor_node, kick_node, 'vnfdeviceProvisioned', trigger_expr, device.name)
 
     def applyDeviceSyncedKicker(self, root, log, vnf_deployment_name, site_name, tenant, service_deployment_name,
-                    esc_device_name, device_name):
+                            esc_device_name, device_name):
         kick_monitor_node = ("/vnf-manager/site[name='{}']/vnf-deployment[tenant='{}'][deployment-name='{}']/device[name='{}']").format(
                               site_name, tenant, service_deployment_name, device_name)
         trigger_expr = "status='Synchronized'"
@@ -1053,6 +1028,15 @@ class ScalableService(Service):
                       site_name, tenant, service_deployment_name)
         self.applyKicker(root, log, vnf_deployment_name, site_name, tenant, service_deployment_name,
                          'reactive-re-deploy', int(device_name[-1])+30, kick_monitor_node, kick_node, 'vnfdeviceSynced', trigger_expr)
+
+    def applyNFVODevicePlanKicker(self, root, log, vnf_deployment_name, site_name, tenant, service_deployment_name,
+                                  nfv_deployment_name, device_name):
+        kick_monitor_node = ("/nfv/internal/netconf-deployment-plan[id='{}']/plan/component[type='cisco-nfvo-nano-services:vm-device'][name='{}']").format(
+                              nfv_deployment_name, device_name) 
+        kick_node = ("/vnf-manager/site[name='{}']/vnf-deployment[tenant='{}'][deployment-name='{}']").format(
+                      site_name, tenant, service_deployment_name)
+        self.applyKicker(root, log, vnf_deployment_name, site_name, tenant, service_deployment_name,
+                         'reactive-re-deploy', 90, kick_monitor_node, kick_node, 'NFVODevicePlanChange')
 
     def applyServiceKicker(self, root, log, vnf_deployment_name, site_name, tenant, service_deployment_name,
                            nfv_deployment_name, deployment_type):
@@ -1528,8 +1512,9 @@ class ProvisionFTDDevice(Action):
                 device = ncs.maagic.get_node(trans, kp)
                 service = device._parent._parent
                 root = ncs.maagic.get_root(trans)
-                ((vnf_day0_authgroup, vnf_day0_username, vnf_day0_password), 
-                 (vnf_day1_authgroup, vnf_day1_username, vnf_day1_password)) = getVNFPasswords(self.log, service)
+                vnf_catalog = root.vnf_manager.vnf_catalog[device.vnf_catalog]
+                vnf_day0_authgroup, vnf_day0_username, vnf_day0_password, \
+                 vnf_day1_authgroup, vnf_day1_username, vnf_day1_password = getVNFPasswords(self.log, root, vnf_catalog)
                 self.log.info('Provisioning Device: '+device.name)
                 dev = root.devices.device[device.name]
                 input = dev.config.cisco_ftd__ftd.actions.provision.get_input()
@@ -1606,9 +1591,9 @@ class RegisterVNFWithNSO(Action):
                 self.log.info('Registering Device: '+device.name)
                 root = ncs.maagic.get_root(trans)
                 service = device._parent._parent
-                vnf_catalog = root.vnf_manager.vnf_catalog[service.catalog_vnf]
-                ((vnf_day0_authgroup, vnf_day0_username, vnf_day0_password), 
-                 (vnf_day1_authgroup, vnf_day1_username, vnf_day1_password)) = getVNFPasswords(self.log, service)
+                vnf_catalog = root.vnf_manager.vnf_catalog[device.vnf_catalog]
+                vnf_day0_authgroup, vnf_day0_username, vnf_day0_password, \
+                 vnf_day1_authgroup, vnf_day1_username, vnf_day1_password = getVNFPasswords(self.log, root, vnf_catalog)
                 vars = ncs.template.Variables()
                 vars.add('DEVICE-NAME', device.name)
                 for network in device.networks.network:
@@ -1616,11 +1601,11 @@ class RegisterVNFWithNSO(Action):
                         vars.add('IP-ADDRESS', network.ip_address)
                         break
                 vars.add('PORT', ftd_api_port);
-                vars.add('AUTHGROUP', day0_authgroup);
+                vars.add('AUTHGROUP', vnf_day0_authgroup);
                 template = ncs.template.Template(device)
                 for catalog_template in vnf_catalog.templates.template:
                     if catalog_template.target.device_type == 'registration':
-                        self.log.info('Applying template: ', catalog_template_name)
+                        self.log.info('Applying template: ', catalog_template.name)
                         template.apply(catalog_template.name, vars)
                         break;
                 trans.apply()
@@ -1925,23 +1910,23 @@ class Main(ncs.application.Application):
             kicker2.priority = 1
             kicker2.trigger_type = 'enter'
             
-            self.log.info('Creating Device Deployed Monitor')
-            kicker3 = root.kickers.data_kicker.create('ftdv_ngfw-DeviceDeployed-register-device')
-            kicker3.monitor = "/vnf-manager/site/vnf-deployment/device"
-            kicker3.trigger_expr = "not(../manager/name) and status='Starting'"
-            kicker3.kick_node = '.'
-            kicker3.action_name = 'register-vnf-with-nso'
-            kicker3.priority = 1
-            kicker3.trigger_type = 'enter'
+#            self.log.info('Creating Device Deployed Monitor')
+#            kicker3 = root.kickers.data_kicker.create('ftdv_ngfw-DeviceDeployed-register-device')
+#            kicker3.monitor = "/vnf-manager/site/vnf-deployment/device"
+#            kicker3.trigger_expr = "not(../manager/name) and status='Starting'"
+#            kicker3.kick_node = '.'
+#            kicker3.action_name = 'register-vnf-with-nso'
+#            kicker3.priority = 1
+#            kicker3.trigger_type = 'enter'
             
-            self.log.info('Creating Device Removed Monitor')
-            kicker4 = root.kickers.data_kicker.create('ftdv_ngfw-DeviceRemoved-register-device')
-            kicker4.monitor = "/vnf-manager/site/vnf-deployment"
-            kicker4.trigger_expr = "not(device)"
-            kicker4.kick_node = '.'
-            kicker4.action_name = 'deregister-vnf-with-nso'
-            kicker4.priority = 1
-            kicker4.trigger_type = 'enter'
+#            self.log.info('Creating Device Removed Monitor')
+#            kicker4 = root.kickers.data_kicker.create('ftdv_ngfw-DeviceRemoved-register-device')
+#            kicker4.monitor = "/vnf-manager/site/vnf-deployment"
+#            kicker4.trigger_expr = "not(device)"
+#            kicker4.kick_node = '.'
+#            kicker4.action_name = 'deregister-vnf-with-nso'
+#            kicker4.priority = 1
+#            kicker4.trigger_type = 'enter'
             
             self.log.info('Creating ESC Notifications Monitor')
             kicker6 = root.kickers.notification_kicker.create('ftdv_ngfw-esc-notifications')
@@ -1952,7 +1937,7 @@ class Main(ncs.application.Application):
             self.log.info('Creating Devices Service Operational Monitor')
             kicker7 = root.kickers.data_kicker.create('ftdv_ngfw-ServiceOperational-StartStopDevices')
             kicker7.monitor = '/vnf-manager/site/vnf-deployment'
-            kicker7.trigger_expr = "status='Operational'"
+            kicker7.trigger_expr = "./manager and status='Operational'"
             kicker7.kick_node = '.'
             kicker7.action_name = 'reactive-re-deploy'
             kicker7.priority = 1
@@ -1993,10 +1978,10 @@ class Main(ncs.application.Application):
         self.register_service('ftdv-ngfw-servicepoint', NGFWBasicService)
         self.register_service('ftdv-ngfw-advanced-servicepoint', NGFWAdvancedService)
         self.register_service('ftdv-ngfw-scalable-servicepoint', ScalableService)
-        self.register_action('ftdv-ngfw-registerVnfWithNso-action', RegisterVNFWithNSO)
-        self.register_action('ftdv-ngfw-deregisterVnfWithNso-action', DeregisterVNFWithNSO)
-        self.register_action('ftdv-ngfw-provisionFTDDevice-action', ProvisionFTDDevice)
-        self.register_action('ftdv-ngfw-syncVnfWithNso-action', SyncVNFWithNSO)
+#        self.register_action('ftdv-ngfw-registerVnfWithNso-action', RegisterVNFWithNSO)
+#        self.register_action('ftdv-ngfw-deregisterVnfWithNso-action', DeregisterVNFWithNSO)
+#        self.register_action('ftdv-ngfw-provisionFTDDevice-action', ProvisionFTDDevice)
+#        self.register_action('ftdv-ngfw-syncVnfWithNso-action', SyncVNFWithNSO)
         self.register_action('ftdv-ngfw-getDeviceData-action', GetDeviceData)
         self.register_action('ftdv-ngfw-addUser-action', AddDeviceUser)
         self.register_action('ftdv-ngfw-deleteUser-action', DeleteDeviceUser)

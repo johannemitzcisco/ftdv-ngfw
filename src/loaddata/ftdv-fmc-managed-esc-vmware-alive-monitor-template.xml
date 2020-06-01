@@ -85,6 +85,9 @@
                           </properties>
                         </metric_collector>
                       </kpi>
+                      <kpi tags=" delete ">
+                        <event_name>VM_ALIVE</event_name>
+                      </kpi>
                     </kpi_data>
                     <rules>
                       <admin_rules>
@@ -103,6 +106,9 @@
                           <event_name>FTD_UNDERLOADED</event_name>
                           <action>ALWAYS log</action>
                           <action>TRUE servicescaledown.sh</action>
+                        </rule>
+                        <rule tags=" delete ">
+                          <event_name>VM_ALIVE</event_name>
                         </rule>
                       </admin_rules>
                     </rules>

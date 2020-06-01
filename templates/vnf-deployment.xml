@@ -25,6 +25,9 @@
     <vim-type>vcenter</vim-type>
     <vdu>
       <id>{descriptor-vdu}</id>
+<?if {$MANAGER-IP-ADDRESS=''}?>
+      <managed/>
+<?end?>
       <image-name>{$IMAGE-NAME}</image-name>
       <bootup-time>{bootup-time}</bootup-time>
       <recovery-wait-time>{recovery-time}</recovery-wait-time>
@@ -34,6 +37,7 @@
         <id>1</id>
       </netconf-volume>
 <?switch-context CATALOG?>
+      <device-profile>{device-profile}</device-profile>
       <esc-device-template>
         <name>{name}</name>
 <?if {$MONITOR-TYPE='alive'}?>
@@ -120,6 +124,9 @@
         </variable>
 <?end?>
       </esc-device-template>
+      <!-- device-name-pool>
+        <device-name>FTD-1</device-name>
+      </device-name-pool -->
 <?switch-context SITE?>
       <resource-allocation>
         <host-placement>192.168.2.101</host-placement>

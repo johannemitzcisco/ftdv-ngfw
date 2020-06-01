@@ -462,7 +462,7 @@ module ftdv-ngfw {
       }
       leaf status {
         tailf:info "Status of the Deployment";
-        config "false";
+        //config "false";
         type enumeration {
           enum "Unknown";
           enum "Deploying";
@@ -656,6 +656,14 @@ module ftdv-ngfw {
           path "deref(../ftdv-ngfw:descriptor-instantiation-level)/../nfv:vdu-level/nfv:vdu-id";
         }
         when "../descriptor-instantiation-level";
+        mandatory "true";
+      }
+      leaf device-profile {
+        tailf:info "profile at /devices/profiles/profile to apply";
+        type leafref {
+          path "/ncs:devices/ncs:profiles/ncs:profile/ncs:name";
+        }
+        when "../descriptor-vdu";
         mandatory "true";
       }
       leaf bootup-time {

@@ -7,17 +7,20 @@
      <authgroup>{$AUTHGROUP}</authgroup>
      <device-type>
       <generic>
-       <ned-id xmlns:cisco-ftd-gen-1.1="http://tail-f.com/ns/ned-id/cisco-ftd-gen-1.1">cisco-ftd-gen-1.1:cisco-ftd-gen-1.1</ned-id>
+       <ned-id xmlns:cisco-ftd-gen-1.4="http://tail-f.com/ns/ned-id/cisco-ftd-gen-1.4">cisco-ftd-gen-1.4:cisco-ftd-gen-1.4</ned-id>
       </generic>
      </device-type>
      <ned-settings>
        <cisco-ftd xmlns="http://tailf.com/ned/cisco-ftd/meta">
          <connection>
-           <remote-protocol>https</remote-protocol>
            <ssl>
              <accept-any>true</accept-any>
            </ssl>
          </connection>
+         <nedBehavior>
+           <autoEndEasySetup>true</autoEndEasySetup>
+           <enableAutoDeploy>true</enableAutoDeploy>
+         </nedBehavior>
          <log-verbose>true</log-verbose>
        </cisco-ftd>
      </ned-settings>
